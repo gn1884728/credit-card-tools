@@ -2,14 +2,27 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>信用卡權益速查中心</title>
+    
+    <!-- 全新：手機桌面 App 化專用設定 (PWA) -->
+    <meta name="apple-mobile-web-app-capable" content="yes"> <!-- 蘋果 App 模式 -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes"> <!-- 安卓 App 模式 -->
+    <link rel="apple-touch-icon" href="icon.png"> <!-- 桌面 Icon 指向您的圖片 -->
+    <link rel="icon" type="image/png" href="icon.png">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* 避免 iPhone 底部條遮擋，優化手感 */
+        body { padding-bottom: env(safe-area-inset-bottom); }
+        .rounded-xl, .rounded-2xl { border-radius: 1rem; } /* 調整弧度更像現代 App */
+    </style>
 </head>
 <body class="bg-gray-100 min-h-screen font-sans flex justify-center items-start pt-10 px-4">
     
-    <div class="w-full max-w-md bg-white p-6 rounded-2xl shadow-lg border-t-4 border-blue-600">
+    <div class="w-full max-w-md bg-white p-6 rounded-2xl shadow-lg border-t-4 border-blue-600 mb-8">
         <h2 class="text-2xl font-bold mb-2 text-center text-gray-800">
             <i class="fas fa-credit-card text-blue-600 mr-2"></i>信用卡權益速查
         </h2>
@@ -36,15 +49,15 @@
             預估小樹點：0 點
         </div>
 
-        <!-- 全新：群眾回報區塊 -->
+        <!-- 網報區塊 -->
         <div class="border-t border-gray-200 pt-5">
             <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-100 flex items-center justify-between">
                 <div>
                     <h4 class="text-sm font-bold text-blue-800 mb-1">查無特店？歡迎回報 🚀</h4>
-                    <p class="text-xs text-gray-600">提供截圖，一起擴大最新資料庫！</p>
+                    <p class="text-xs text-gray-600">提供截圖，我們來把關加入！</p>
                 </div>
                 <a href="https://forms.gle/xLTZqzGPGXib2zYj6" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 px-4 rounded-lg shadow transition-colors whitespace-nowrap">
-                    提供截圖
+                    回報數據
                 </a>
             </div>
         </div>
@@ -90,7 +103,7 @@
                 calcPoints();
             } else { 
                 resDiv.classList.remove('hidden'); 
-                resDiv.innerHTML = `⚠️ 未找到符合通路，請手動輸入回饋率，或點擊下方協助回報。`; 
+                resDiv.innerHTML = `⚠️ 未找到符合通路，請手動輸入回饋率，或協助回報。`; 
             }
         }
 
