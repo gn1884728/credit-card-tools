@@ -5,13 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>信用卡權益速查中心</title>
     
+    <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
-    
-    <!-- 終極解法：強制讀取實體圖檔，加上 ?v=2 破解手機快取 -->
-    <link rel="apple-touch-icon" href="icon.png?v=2">
-    <link rel="icon" type="image/png" href="icon.png?v=2">
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="icon" type="image/png" href="icon.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -63,16 +62,23 @@
     </div>
 
     <script>
-        const customCubeData = [
-            { name: "台中老井燒肉", plan: "趣旅行", rate: 0.03 }, 
-            { name: "八方雲集", plan: "樂饗購", rate: 0.03 }, 
-            { name: "支付寶", plan: "玩數位", rate: 0.03 }, 
-            { name: "摩斯漢堡", plan: "樂饗購", rate: 0.03 }, 
-            { name: "必勝客", plan: "樂饗購", rate: 0.03 }, 
-            { name: "拿坡里", plan: "樂饗購", rate: 0.03 }, 
-            { name: "品田牧場", plan: "樂饗購", rate: 0.03 }, 
-            { name: "Mr.May義式百匯", plan: "樂饗購", rate: 0.03 }
-        ];
+        let customCubeData = [];
+
+        // 自動去抓您那份黃金資料庫
+        fetch('cube_config.json')
+            .then(response => response.json())
+            .then(data => {
+                for (const plan in data.plans) {
+                    data.plans[plan].forEach(store => {
+                        customCubeData.push({
+                            name: store.name,
+                            plan: plan,
+                            rate: store.rate
+                        });
+                    });
+                }
+            })
+            .catch(error => console.error('無法載入資料庫:', error));
 
         function fuzzyMatch(p, s) { 
             let pI = 0, sI = 0; 
@@ -89,7 +95,7 @@
             const val = document.getElementById('storeSearch').value.trim(); 
             const resDiv = document.getElementById('storeResult');
             
-            if (!val) { 
+            if (!val || customCubeData.length === 0) { 
                 resDiv.classList.add('hidden'); 
                 return; 
             }
@@ -97,8 +103,8 @@
             if (matchedList.length > 0) {
                 resDiv.classList.remove('hidden'); 
                 resDiv.innerHTML = `✅ 找到 ${matchedList.length} 個適用方案：<br><br>` + 
-                                   matchedList.map(m => `&bull; <b>${m.name}</b> ➔ 建議切換 <b>【${m.plan}】</b> (${m.rate*100}%)<br>`).join('');
-                document.getElementById('consumeRate').value = matchedList[0].rate * 100; 
+                                   matchedList.map(m => `&bull; <b>${m.name}</b> ➔ 建議切換 <b>【${m.plan}】</b> (${Math.round(m.rate*100)}%)<br>`).join('');
+                document.getElementById('consumeRate').value = Math.round(matchedList[0].rate * 100); 
                 calcPoints();
             } else { 
                 resDiv.classList.remove('hidden'); 
