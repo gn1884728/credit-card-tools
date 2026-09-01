@@ -32,13 +32,25 @@
             </div>
         </div>
         
-        <div id="pointResult" class="text-center text-xl font-bold text-rose-600 py-4 bg-rose-50 rounded-xl border border-rose-100">
+        <div id="pointResult" class="text-center text-xl font-bold text-rose-600 py-4 bg-rose-50 rounded-xl border border-rose-100 mb-6">
             預估小樹點：0 點
+        </div>
+
+        <!-- 全新：群眾回報區塊 -->
+        <div class="border-t border-gray-200 pt-5">
+            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-100 flex items-center justify-between">
+                <div>
+                    <h4 class="text-sm font-bold text-blue-800 mb-1">查無特店？歡迎回報 🚀</h4>
+                    <p class="text-xs text-gray-600">提供截圖，一起擴大最新資料庫！</p>
+                </div>
+                <a href="https://forms.gle/xLTZqzGPGXib2zYj6" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 px-4 rounded-lg shadow transition-colors whitespace-nowrap">
+                    提供截圖
+                </a>
+            </div>
         </div>
     </div>
 
     <script>
-        // 這裡可以隨時擴充您的特店資料庫
         const customCubeData = [
             { name: "台中老井燒肉", plan: "趣旅行", rate: 0.03 }, 
             { name: "八方雲集", plan: "樂饗購", rate: 0.03 }, 
@@ -78,7 +90,7 @@
                 calcPoints();
             } else { 
                 resDiv.classList.remove('hidden'); 
-                resDiv.innerHTML = `⚠️ 未找到符合通路，請手動輸入回饋率確認。`; 
+                resDiv.innerHTML = `⚠️ 未找到符合通路，請手動輸入回饋率，或點擊下方協助回報。`; 
             }
         }
 
