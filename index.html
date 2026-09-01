@@ -3,8 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>信用卡權益速查中心</title>
+    <title>信用卡權益速查中心 | 瘋哥的3c盒子</title>
     
+    <!-- 🌟 SEO 搜尋引擎優化標籤 -->
+    <meta name="description" content="結帳總是忘記切換 CUBE 卡方案？瘋哥自製「信用卡權益速查神器」，免下載 App、無廣告，一秒查詢最新通路回饋與小樹點試算。">
+    <meta name="keywords" content="CUBE卡, 權益查詢, 信用卡回饋, 國泰世華, 小樹點, 瘋哥的3c盒子">
+    
+    <!-- 🌟 社群分享 (LINE/Facebook) 顯示優化標籤 (OG Tags) -->
+    <meta property="og:title" content="信用卡權益速查神器 | 瘋哥專屬工具">
+    <meta property="og:description" content="結帳前一秒查完！免下載 App、無廣告，精準切換 CUBE 卡方案，不漏接任何回饋。">
+    <meta property="og:image" content="https://card.fongarea.com/icon.png">
+    <meta property="og:url" content="https://card.fongarea.com/">
+    <meta property="og:type" content="website">
+
+    <!-- 安卓/蘋果 App 化身分證與圖示 -->
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -59,12 +71,18 @@
                 </a>
             </div>
         </div>
+        
+        <!-- 建立反向連結，將權重導回您的主網站 -->
+        <div class="text-center mt-4">
+            <a href="https://fongarea.com" target="_blank" class="text-xs text-gray-400 hover:text-blue-500 transition-colors">
+                &copy; 2026 瘋哥的3c盒子
+            </a>
+        </div>
     </div>
 
     <script>
         let customCubeData = [];
 
-        // 自動去抓您那份黃金資料庫
         fetch('cube_config.json')
             .then(response => response.json())
             .then(data => {
