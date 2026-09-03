@@ -35,7 +35,7 @@
             <i class="fas fa-credit-card text-blue-600 mr-2"></i>信用卡決策精算
         </h2>
 
-        <!-- 🗂️ 我的信用卡車庫 -->
+        <!-- 🗂️ 我的信用卡車庫 (已極簡化) -->
         <div class="mb-5 p-4 bg-gray-50 rounded-xl border border-gray-100">
             <label class="block text-gray-700 text-sm font-bold mb-3">請勾選您持有的信用卡：</label>
             <div class="grid grid-cols-2 gap-3 text-sm text-gray-600" id="cardCheckboxes">
@@ -48,20 +48,8 @@
                     <span class="font-bold">台新 Richart 體系</span>
                 </label>
                 <label class="flex items-center space-x-2">
-                    <input type="checkbox" value="台灣大白" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
-                    <span class="font-bold">台灣大白 (簽帳白金)</span>
-                </label>
-                <label class="flex items-center space-x-2">
-                    <input type="checkbox" value="中信華航" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
-                    <span class="font-bold">中信華航璀璨無限卡</span>
-                </label>
-                <label class="flex items-center space-x-2">
-                    <input type="checkbox" value="玉山星宇" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
-                    <span class="font-bold">玉山星宇世界卡</span>
-                </label>
-                <label class="flex items-center space-x-2">
-                    <input type="checkbox" value="匯豐旅人" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
-                    <span class="font-bold">匯豐旅人無限卡</span>
+                    <input type="checkbox" value="玉山Unicard" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                    <span class="font-bold">玉山 Unicard</span>
                 </label>
             </div>
         </div>
@@ -121,11 +109,11 @@
     <script>
         let customCubeData = [];
         
-        // 讀取全新多卡資料庫 (已修正為雙層迴圈解析)
+        // 讀取全新多卡資料庫
         fetch('cube_config.json')
             .then(response => response.json())
             .then(data => {
-                // 第一層：抓出卡片名稱 (如 CUBE卡, 台新Richart)
+                // 第一層：抓出卡片名稱
                 for (const cardName in data) {
                     // 第二層：抓出該卡片的方案
                     for (const planName in data[cardName]) {
