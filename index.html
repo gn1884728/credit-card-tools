@@ -1,85 +1,135 @@
-<!-- ======================================================= -->
-<!-- 信用卡決策精算引擎 (請整包替換您的白色卡片區塊) -->
-<!-- ======================================================= -->
-<div class="bg-white p-6 rounded-[24px] shadow-sm mb-6 relative">
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>信用卡權益速查中心 | 瘋哥的3c盒子</title>
     
-    <h2 class="text-xl font-bold mb-6 text-center text-black">信用卡決策精算</h2>
+    <!-- SEO 與社群分享標籤 -->
+    <meta name="description" content="結帳總是忘記切換信用卡方案？瘋哥自製「信用卡權益決策神器」，免下載 App，一秒查詢最新通路回饋與最優推薦卡別。">
+    <meta property="og:title" content="信用卡權益速查神器 | 瘋哥專屬工具">
+    <meta property="og:description" content="結帳前一秒查完！精準切換方案，告訴你刷哪張卡最賺。">
+    <meta property="og:image" content="https://card.fongarea.com/icon-512.png">
+    <meta property="og:type" content="website">
 
-    <!-- 🗂️ 我的信用卡車庫 (多卡勾選區) -->
-    <div class="mb-5 p-4 bg-gray-50 rounded-xl border border-gray-100">
-        <label class="block text-gray-700 text-sm font-bold mb-3">請勾選您持有的信用卡：</label>
-        <div class="grid grid-cols-2 gap-3 text-sm text-gray-600" id="cardCheckboxes">
-            <label class="flex items-center space-x-2">
-                <input type="checkbox" value="CUBE卡" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
-                <span>國泰 CUBE 卡</span>
-            </label>
-            <label class="flex items-center space-x-2">
-                <input type="checkbox" value="台新Richart" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
-                <span>台新 Richart 卡</span>
-            </label>
-            <label class="flex items-center space-x-2">
-                <input type="checkbox" value="台灣大白" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
-                <span>台灣大白 (簽帳白金)</span>
-            </label>
-            <label class="flex items-center space-x-2">
-                <input type="checkbox" value="中信華航" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
-                <span>中信華航璀璨無限卡</span>
-            </label>
-            <label class="flex items-center space-x-2">
-                <input type="checkbox" value="玉山星宇" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
-                <span>玉山星宇世界卡</span>
-            </label>
-            <label class="flex items-center space-x-2">
-                <input type="checkbox" value="匯豐旅人" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
-                <span>匯豐旅人無限卡</span>
-            </label>
-        </div>
-    </div>
+    <!-- 📱 安卓/蘋果 App 化身分證與桌面圖示 (解決圖示很醜的問題) -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <!-- 注意：這裡對應您 GitHub 上的圖示檔名，確保有這張圖片 -->
+    <link rel="apple-touch-icon" href="icon-512.png">
+    <link rel="icon" type="image/png" href="icon-512.png">
 
-    <!-- 🔍 搜尋店名 -->
-    <div class="mb-5 relative">
-        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <i class="fas fa-search text-gray-400"></i>
-        </div>
-        <input type="text" id="storeSearch" oninput="searchStore()" placeholder="輸入店名速查 (例如：全家、老井)..." class="w-full pl-9 pr-4 py-3 border border-gray-100 rounded-xl bg-gray-50 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-600 transition-colors">
-    </div>
+    <!-- 🎨 載入美化排版 (這就是網頁變漂亮的關鍵) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { padding-bottom: env(safe-area-inset-bottom); }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen font-sans flex justify-center items-start pt-10 px-4">
     
-    <!-- 搜尋結果顯示區 (預設隱藏) -->
-    <div id="storeResult" class="p-4 bg-blue-50 rounded-xl mb-5 text-sm font-bold text-blue-800 hidden border border-blue-100"></div>
-    
-    <!-- 💰 消費金額與回饋率 -->
-    <div class="grid grid-cols-2 gap-4 mb-6">
-        <div>
-            <label class="block text-gray-500 text-xs mb-2 font-bold">消費金額</label>
-            <input type="number" id="consumeAmt" placeholder="金額" class="w-full p-3 border border-gray-100 rounded-xl bg-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-700 shadow-sm" oninput="calcPoints()">
-        </div>
-        <div>
-            <label class="block text-gray-500 text-xs mb-2 font-bold">最優回饋率 (%)</label>
-            <input type="number" id="consumeRate" placeholder="回饋率" class="w-full p-3 border border-gray-100 rounded-xl bg-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-700 shadow-sm" oninput="calcPoints()">
-        </div>
-    </div>
-    
-    <!-- 🌟 試算結果 -->
-    <div id="pointResult" class="text-center text-xl font-bold text-[#e11d48] py-4 bg-gray-50 rounded-xl mb-6 tracking-wide">
-        預估回饋：0
-    </div>
-</div>
-
-<!-- ======================================================= -->
-<!-- 多卡決策邏輯 JS -->
-<!-- ======================================================= -->
-<script>
-    if (typeof customCubeData === 'undefined') {
-        var customCubeData = [];
+    <div class="w-full max-w-md bg-white p-6 rounded-[24px] shadow-lg border-t-4 border-blue-600 mb-8 relative">
         
-        // 目前先讀取您的 CUBE 舊資料庫，並自動打上標籤
+        <h2 class="text-xl font-bold mb-6 text-center text-black">
+            <i class="fas fa-credit-card text-blue-600 mr-2"></i>信用卡決策精算
+        </h2>
+
+        <!-- 🗂️ 我的信用卡車庫 (多卡勾選區) -->
+        <div class="mb-5 p-4 bg-gray-50 rounded-xl border border-gray-100">
+            <label class="block text-gray-700 text-sm font-bold mb-3">請勾選您持有的信用卡：</label>
+            <div class="grid grid-cols-2 gap-3 text-sm text-gray-600" id="cardCheckboxes">
+                <label class="flex items-center space-x-2">
+                    <input type="checkbox" value="CUBE卡" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                    <span class="font-bold">國泰 CUBE 卡</span>
+                </label>
+                <label class="flex items-center space-x-2">
+                    <input type="checkbox" value="台新Richart" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                    <span class="font-bold">台新 Richart 體系</span>
+                </label>
+                <label class="flex items-center space-x-2">
+                    <input type="checkbox" value="台灣大白" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                    <span class="font-bold">台灣大白 (簽帳白金)</span>
+                </label>
+                <label class="flex items-center space-x-2">
+                    <input type="checkbox" value="中信華航" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                    <span class="font-bold">中信華航璀璨無限卡</span>
+                </label>
+                <label class="flex items-center space-x-2">
+                    <input type="checkbox" value="玉山星宇" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                    <span class="font-bold">玉山星宇世界卡</span>
+                </label>
+                <label class="flex items-center space-x-2">
+                    <input type="checkbox" value="匯豐旅人" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                    <span class="font-bold">匯豐旅人無限卡</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- 🔍 搜尋店名 -->
+        <div class="mb-5 relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i class="fas fa-search text-gray-400"></i>
+            </div>
+            <input type="text" id="storeSearch" oninput="searchStore()" placeholder="輸入店名速查 (例如：全家、老井)..." class="w-full pl-9 pr-4 py-3 border border-gray-100 rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 font-bold shadow-sm transition-colors">
+        </div>
+        
+        <!-- 搜尋結果顯示區 (預設隱藏) -->
+        <div id="storeResult" class="p-4 bg-blue-50 rounded-xl mb-5 text-sm font-bold text-blue-800 hidden border border-blue-100"></div>
+        
+        <!-- 💰 消費金額與回饋率 -->
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div>
+                <label class="block text-gray-500 text-xs mb-2 font-bold">消費金額</label>
+                <input type="number" id="consumeAmt" placeholder="輸入金額" class="w-full p-3 border border-gray-100 rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 font-bold shadow-sm" oninput="calcPoints()">
+            </div>
+            <div>
+                <label class="block text-gray-500 text-xs mb-2 font-bold">最優回饋率 (%)</label>
+                <input type="number" id="consumeRate" placeholder="例如: 3" class="w-full p-3 border border-gray-100 rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 font-bold shadow-sm" oninput="calcPoints()">
+            </div>
+        </div>
+        
+        <!-- 🌟 試算結果 -->
+        <div id="pointResult" class="text-center text-xl font-bold text-rose-600 py-4 bg-rose-50 rounded-xl mb-6 border border-rose-100 tracking-wide">
+            預估回饋：0
+        </div>
+
+        <!-- 🚀 查無特店回報區塊 -->
+        <div class="border-t border-gray-100 pt-5 mt-2">
+            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-100 flex items-center justify-between">
+                <div>
+                    <h4 class="text-sm font-bold text-blue-800 mb-1">查無特店？歡迎回報 🚀</h4>
+                    <p class="text-xs text-gray-500 font-bold">提供截圖，擴大資料庫</p>
+                </div>
+                <a href="https://forms.gle/xLTZqzGPGXib2zYj6" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 px-4 rounded-lg shadow transition-colors whitespace-nowrap">
+                    提供截圖
+                </a>
+            </div>
+        </div>
+
+        <!-- 反向連結 -->
+        <div class="text-center mt-6">
+            <a href="https://fongarea.com" target="_blank" class="text-xs text-gray-400 hover:text-blue-500 font-bold transition-colors">
+                &copy; 2026 瘋哥的3c盒子
+            </a>
+        </div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- 多卡決策邏輯 JS -->
+    <!-- ======================================================= -->
+    <script>
+        let customCubeData = [];
+        
+        // 讀取資料庫，目前相容您的舊版 CUBE 資料，並自動補上卡片標籤
         fetch('cube_config.json')
             .then(response => response.json())
             .then(data => {
                 for (const plan in data.plans) {
                     data.plans[plan].forEach(store => {
                         customCubeData.push({
-                            card: "CUBE卡", // 暫時全部定義為 CUBE 卡
+                            card: "CUBE卡", // 暫定全部歸類為 CUBE 卡，未來改版 JSON 再細分
                             name: store.name,
                             plan: plan,
                             rate: store.rate
@@ -88,58 +138,58 @@
                 }
             })
             .catch(error => console.error('無法載入資料庫:', error));
-    }
 
-    function fuzzyMatch(p, s) { 
-        let pI = 0, sI = 0; 
-        p = p.replace(/\s+/g, '').toLowerCase(); 
-        s = s.replace(/\s+/g, '').toLowerCase(); 
-        while (pI < p.length && sI < s.length) { 
-            if (p[pI] === s[sI]) pI++; 
-            sI++; 
-        } 
-        return pI === p.length; 
-    }
-
-    function searchStore() {
-        const val = document.getElementById('storeSearch').value.trim(); 
-        const resDiv = document.getElementById('storeResult');
-        
-        // 抓取畫面上「有被打勾」的信用卡
-        const checkedCards = Array.from(document.querySelectorAll('#cardCheckboxes input:checked')).map(cb => cb.value);
-
-        if (!val || customCubeData.length === 0) { 
-            resDiv.classList.add('hidden'); 
-            return; 
+        function fuzzyMatch(p, s) { 
+            let pI = 0, sI = 0; 
+            p = p.replace(/\s+/g, '').toLowerCase(); 
+            s = s.replace(/\s+/g, '').toLowerCase(); 
+            while (pI < p.length && sI < s.length) { 
+                if (p[pI] === s[sI]) pI++; 
+                sI++; 
+            } 
+            return pI === p.length; 
         }
 
-        // 過濾條件：1. 符合店名 2. 必須是打勾的卡片
-        let matchedList = customCubeData.filter(item => 
-            fuzzyMatch(val, item.name) && checkedCards.includes(item.card)
-        );
-
-        // 自動決策：將回饋率從高排到低
-        matchedList.sort((a, b) => b.rate - a.rate);
-
-        if (matchedList.length > 0) {
-            resDiv.classList.remove('hidden'); 
-            resDiv.innerHTML = `✅ 找到 ${matchedList.length} 個適用方案 (已為您排序)：<br><br>` + 
-                               matchedList.map(m => `&bull; <b>[${m.card}]</b> ➔ 建議切換 <b>【${m.plan}】</b> (${Math.round(m.rate*100)}%)<br>`).join('');
+        function searchStore() {
+            const val = document.getElementById('storeSearch').value.trim(); 
+            const resDiv = document.getElementById('storeResult');
             
-            // 自動帶入「最高」的那張卡的回饋率
-            document.getElementById('consumeRate').value = Math.round(matchedList[0].rate * 100); 
-            calcPoints();
-        } else { 
-            resDiv.classList.remove('hidden'); 
-            resDiv.innerHTML = `⚠️ 在您勾選的卡片中，未找到符合通路。`; 
-            document.getElementById('consumeRate').value = '';
-            calcPoints();
-        }
-    }
+            // 取得畫面上打勾的卡片陣列
+            const checkedCards = Array.from(document.querySelectorAll('#cardCheckboxes input:checked')).map(cb => cb.value);
 
-    function calcPoints() {
-        const amt = parseFloat(document.getElementById('consumeAmt').value) || 0; 
-        const rate = (parseFloat(document.getElementById('consumeRate').value) || 0) / 100;
-        document.getElementById('pointResult').innerText = `預估回饋：${Math.round(amt * rate)}`;
-    }
-</script>
+            if (!val || customCubeData.length === 0) { 
+                resDiv.classList.add('hidden'); 
+                return; 
+            }
+
+            // 過濾：名稱相符 + 必須是打勾的卡
+            let matchedList = customCubeData.filter(item => 
+                fuzzyMatch(val, item.name) && checkedCards.includes(item.card)
+            );
+
+            // 依照回饋率由高至低排序
+            matchedList.sort((a, b) => b.rate - a.rate);
+
+            if (matchedList.length > 0) {
+                resDiv.classList.remove('hidden'); 
+                resDiv.innerHTML = `✅ 找到 ${matchedList.length} 個適用方案 (已為您排序)：<br><br>` + 
+                                   matchedList.map(m => `&bull; <b>[${m.card}]</b> ➔ 建議切換 <b>【${m.plan}】</b> (${Math.round(m.rate*100)}%)<br>`).join('');
+                
+                document.getElementById('consumeRate').value = Math.round(matchedList[0].rate * 100); 
+                calcPoints();
+            } else { 
+                resDiv.classList.remove('hidden'); 
+                resDiv.innerHTML = `⚠️ 在您勾選的卡片中，未找到符合通路。`; 
+                document.getElementById('consumeRate').value = '';
+                calcPoints();
+            }
+        }
+
+        function calcPoints() {
+            const amt = parseFloat(document.getElementById('consumeAmt').value) || 0; 
+            const rate = (parseFloat(document.getElementById('consumeRate').value) || 0) / 100;
+            document.getElementById('pointResult').innerText = `預估回饋：${Math.round(amt * rate)}`;
+        }
+    </script>
+</body>
+</html>
