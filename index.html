@@ -12,16 +12,15 @@
     <meta property="og:image" content="https://card.fongarea.com/icon-512.png">
     <meta property="og:type" content="website">
 
-    <!-- 📱 安卓/蘋果 App 化身分證與桌面圖示 (解決圖示很醜的問題) -->
+    <!-- 📱 安卓/蘋果 App 化身分證與桌面圖示 -->
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
-    <!-- 注意：這裡對應您 GitHub 上的圖示檔名，確保有這張圖片 -->
     <link rel="apple-touch-icon" href="icon-512.png">
     <link rel="icon" type="image/png" href="icon-512.png">
 
-    <!-- 🎨 載入美化排版 (這就是網頁變漂亮的關鍵) -->
+    <!-- 🎨 載入美化排版 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -36,7 +35,7 @@
             <i class="fas fa-credit-card text-blue-600 mr-2"></i>信用卡決策精算
         </h2>
 
-        <!-- 🗂️ 我的信用卡車庫 (多卡勾選區) -->
+        <!-- 🗂️ 我的信用卡車庫 -->
         <div class="mb-5 p-4 bg-gray-50 rounded-xl border border-gray-100">
             <label class="block text-gray-700 text-sm font-bold mb-3">請勾選您持有的信用卡：</label>
             <div class="grid grid-cols-2 gap-3 text-sm text-gray-600" id="cardCheckboxes">
@@ -45,7 +44,7 @@
                     <span class="font-bold">國泰 CUBE 卡</span>
                 </label>
                 <label class="flex items-center space-x-2">
-                    <input type="checkbox" value="台新Richart" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                    <input type="checkbox" value="台新Richart" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
                     <span class="font-bold">台新 Richart 體系</span>
                 </label>
                 <label class="flex items-center space-x-2">
@@ -75,7 +74,7 @@
             <input type="text" id="storeSearch" oninput="searchStore()" placeholder="輸入店名速查 (例如：全家、老井)..." class="w-full pl-9 pr-4 py-3 border border-gray-100 rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 font-bold shadow-sm transition-colors">
         </div>
         
-        <!-- 搜尋結果顯示區 (預設隱藏) -->
+        <!-- 搜尋結果顯示區 -->
         <div id="storeResult" class="p-4 bg-blue-50 rounded-xl mb-5 text-sm font-bold text-blue-800 hidden border border-blue-100"></div>
         
         <!-- 💰 消費金額與回饋率 -->
@@ -122,19 +121,24 @@
     <script>
         let customCubeData = [];
         
-        // 讀取資料庫，目前相容您的舊版 CUBE 資料，並自動補上卡片標籤
+        // 讀取全新多卡資料庫 (已修正為雙層迴圈解析)
         fetch('cube_config.json')
             .then(response => response.json())
             .then(data => {
-                for (const plan in data.plans) {
-                    data.plans[plan].forEach(store => {
-                        customCubeData.push({
-                            card: "CUBE卡", // 暫定全部歸類為 CUBE 卡，未來改版 JSON 再細分
-                            name: store.name,
-                            plan: plan,
-                            rate: store.rate
+                // 第一層：抓出卡片名稱 (如 CUBE卡, 台新Richart)
+                for (const cardName in data) {
+                    // 第二層：抓出該卡片的方案
+                    for (const planName in data[cardName]) {
+                        // 第三層：將店家與回饋率存入陣列
+                        data[cardName][planName].forEach(store => {
+                            customCubeData.push({
+                                card: cardName,
+                                name: store.name,
+                                plan: planName,
+                                rate: store.rate
+                            });
                         });
-                    });
+                    }
                 }
             })
             .catch(error => console.error('無法載入資料庫:', error));
