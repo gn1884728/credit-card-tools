@@ -12,7 +12,7 @@
     <meta property="og:image" content="https://card.fongarea.com/icon.png.png">
     <meta property="og:type" content="website">
 
-    <!-- 📱 安卓/蘋果 App 化身分證與桌面圖示 -->
+    <!-- 📱 安卓 / iOS PWA 身分證與桌面圖示 -->
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -20,7 +20,7 @@
     <link rel="apple-touch-icon" href="icon.png.png">
     <link rel="icon" type="image/png" href="icon.png.png">
 
-    <!-- 🎨 載入美化排版 -->
+    <!-- 🎨 樣式與圖示庫 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -35,19 +35,19 @@
             <i class="fas fa-credit-card text-blue-600 mr-2"></i>信用卡切換速查
         </h2>
 
-        <!-- 🗂️ 我的信用卡車庫 -->
+        <!-- 🗂️ 我的信用卡車庫 (三大主力切換卡) -->
         <div class="mb-5 p-4 bg-gray-50 rounded-xl border border-gray-100">
             <label class="block text-gray-700 text-sm font-bold mb-3">請勾選您持有的信用卡：</label>
             <div class="grid grid-cols-2 gap-3 text-sm text-gray-600" id="cardCheckboxes">
-                <label class="flex items-center space-x-2">
+                <label class="flex items-center space-x-2 cursor-pointer">
                     <input type="checkbox" value="CUBE卡" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
                     <span class="font-bold">國泰 CUBE 卡</span>
                 </label>
-                <label class="flex items-center space-x-2">
+                <label class="flex items-center space-x-2 cursor-pointer">
                     <input type="checkbox" value="台新Richart" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
                     <span class="font-bold">台新 Richart 體系</span>
                 </label>
-                <label class="flex items-center space-x-2">
+                <label class="flex items-center space-x-2 cursor-pointer">
                     <input type="checkbox" value="玉山Unicard" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
                     <span class="font-bold">玉山 Unicard</span>
                 </label>
@@ -59,10 +59,10 @@
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <i class="fas fa-search text-gray-400"></i>
             </div>
-            <input type="text" id="storeSearch" oninput="searchStore()" placeholder="輸入店名速查 (例如：全家、老井)..." class="w-full pl-9 pr-4 py-3 border border-gray-100 rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 font-bold shadow-sm transition-colors">
+            <input type="text" id="storeSearch" oninput="searchStore()" placeholder="輸入店名速查 (例如：TRIP、星巴克、高鐵)..." class="w-full pl-9 pr-4 py-3 border border-gray-100 rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 font-bold shadow-sm transition-colors">
         </div>
         
-        <!-- 搜尋結果顯示區 -->
+        <!-- 搜尋結果顯示區 (預設隱藏) -->
         <div id="storeResult" class="p-4 bg-blue-50 rounded-xl mb-5 text-sm font-bold text-blue-800 hidden border border-blue-100"></div>
         
         <!-- 💰 消費金額與回饋率 -->
@@ -73,7 +73,7 @@
             </div>
             <div>
                 <label class="block text-gray-500 text-xs mb-2 font-bold">最優回饋率 (%)</label>
-                <input type="number" id="consumeRate" placeholder="例如: 3" class="w-full p-3 border border-gray-100 rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 font-bold shadow-sm" oninput="calcPoints()">
+                <input type="number" step="0.1" id="consumeRate" placeholder="例如: 3.3" class="w-full p-3 border border-gray-100 rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 font-bold shadow-sm" oninput="calcPoints()">
             </div>
         </div>
         
@@ -109,7 +109,7 @@
     <script>
         let customCubeData = [];
         
-        // 讀取全新多卡資料庫
+        // 讀取多卡資料庫
         fetch('cube_config.json')
             .then(response => response.json())
             .then(data => {
@@ -128,21 +128,16 @@
             })
             .catch(error => console.error('無法載入資料庫:', error));
 
-        function fuzzyMatch(p, s) { 
-            let pI = 0, sI = 0; 
-            p = p.replace(/\s+/g, '').toLowerCase(); 
-            s = s.replace(/\s+/g, '').toLowerCase(); 
-            while (pI < p.length && sI < s.length) { 
-                if (p[pI] === s[sI]) pI++; 
-                sI++; 
-            } 
-            return pI === p.length; 
+        // 精準關鍵字比對 (解決 TRIP、英文大小寫與空格比對問題)
+        function searchMatch(val, name) {
+            const keywords = val.trim().toLowerCase().split(/\s+/);
+            const target = name.toLowerCase();
+            return keywords.every(kw => target.includes(kw));
         }
 
         function searchStore() {
             const val = document.getElementById('storeSearch').value.trim(); 
             const resDiv = document.getElementById('storeResult');
-            
             const checkedCards = Array.from(document.querySelectorAll('#cardCheckboxes input:checked')).map(cb => cb.value);
 
             if (!val || customCubeData.length === 0) { 
@@ -150,18 +145,21 @@
                 return; 
             }
 
+            // 過濾：名稱符合 + 必須為打勾卡片
             let matchedList = customCubeData.filter(item => 
-                fuzzyMatch(val, item.name) && checkedCards.includes(item.card)
+                searchMatch(val, item.name) && checkedCards.includes(item.card)
             );
 
+            // 依照回饋率由高至低自動排序
             matchedList.sort((a, b) => b.rate - a.rate);
 
             if (matchedList.length > 0) {
                 resDiv.classList.remove('hidden'); 
+                // 保留精準小數位數 (如 3.3%、3.8%)
                 resDiv.innerHTML = `✅ 找到 ${matchedList.length} 個適用方案 (已為您排序)：<br><br>` + 
-                                   matchedList.map(m => `&bull; <b>[${m.card}]</b> ➔ 建議切換 <b>【${m.plan}】</b> (${Math.round(m.rate*100)}%)<br>`).join('');
+                                   matchedList.map(m => `&bull; <b>[${m.card}]</b> ➔ 建議切換 <b>【${m.plan}】</b> (${Number((m.rate * 100).toFixed(1))}%)<br>`).join('');
                 
-                document.getElementById('consumeRate').value = Math.round(matchedList[0].rate * 100); 
+                document.getElementById('consumeRate').value = Number((matchedList[0].rate * 100).toFixed(1)); 
                 calcPoints();
             } else { 
                 resDiv.classList.remove('hidden'); 
@@ -173,8 +171,8 @@
 
         function calcPoints() {
             const amt = parseFloat(document.getElementById('consumeAmt').value) || 0; 
-            const rate = (parseFloat(document.getElementById('consumeRate').value) || 0) / 100;
-            document.getElementById('pointResult').innerText = `預估回饋：${Math.round(amt * rate)}`;
+            const rate = parseFloat(document.getElementById('consumeRate').value) || 0;
+            document.getElementById('pointResult').innerText = `預估回饋：${Math.round(amt * (rate / 100))}`;
         }
     </script>
 </body>
