@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>信用卡權益速查中心 | 瘋哥的3c盒子</title>
+    <title>信用卡切換速查 | 瘋哥的3c盒子</title>
     
     <!-- SEO 與社群分享標籤 -->
     <meta name="description" content="結帳總是忘記切換信用卡方案？瘋哥自製「信用卡權益決策神器」，免下載 App，一秒查詢最新通路回饋與最優推薦卡別。">
-    <meta property="og:title" content="信用卡權益速查神器 | 瘋哥專屬工具">
+    <meta property="og:title" content="信用卡切換速查 | 瘋哥專屬工具">
     <meta property="og:description" content="結帳前一秒查完！精準切換方案，告訴你刷哪張卡最賺。">
-    <meta property="og:image" content="https://card.fongarea.com/icon-512.png">
+    <meta property="og:image" content="https://card.fongarea.com/icon.png.png">
     <meta property="og:type" content="website">
 
     <!-- 📱 安卓/蘋果 App 化身分證與桌面圖示 -->
@@ -17,8 +17,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
-    <link rel="apple-touch-icon" href="icon-512.png">
-    <link rel="icon" type="image/png" href="icon-512.png">
+    <link rel="apple-touch-icon" href="icon.png.png">
+    <link rel="icon" type="image/png" href="icon.png.png">
 
     <!-- 🎨 載入美化排版 -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -32,10 +32,10 @@
     <div class="w-full max-w-md bg-white p-6 rounded-[24px] shadow-lg border-t-4 border-blue-600 mb-8 relative">
         
         <h2 class="text-xl font-bold mb-6 text-center text-black">
-            <i class="fas fa-credit-card text-blue-600 mr-2"></i>信用卡決策精算
+            <i class="fas fa-credit-card text-blue-600 mr-2"></i>信用卡切換速查
         </h2>
 
-        <!-- 🗂️ 我的信用卡車庫 (已極簡化) -->
+        <!-- 🗂️ 我的信用卡車庫 -->
         <div class="mb-5 p-4 bg-gray-50 rounded-xl border border-gray-100">
             <label class="block text-gray-700 text-sm font-bold mb-3">請勾選您持有的信用卡：</label>
             <div class="grid grid-cols-2 gap-3 text-sm text-gray-600" id="cardCheckboxes">
@@ -113,11 +113,8 @@
         fetch('cube_config.json')
             .then(response => response.json())
             .then(data => {
-                // 第一層：抓出卡片名稱
                 for (const cardName in data) {
-                    // 第二層：抓出該卡片的方案
                     for (const planName in data[cardName]) {
-                        // 第三層：將店家與回饋率存入陣列
                         data[cardName][planName].forEach(store => {
                             customCubeData.push({
                                 card: cardName,
@@ -146,7 +143,6 @@
             const val = document.getElementById('storeSearch').value.trim(); 
             const resDiv = document.getElementById('storeResult');
             
-            // 取得畫面上打勾的卡片陣列
             const checkedCards = Array.from(document.querySelectorAll('#cardCheckboxes input:checked')).map(cb => cb.value);
 
             if (!val || customCubeData.length === 0) { 
@@ -154,12 +150,10 @@
                 return; 
             }
 
-            // 過濾：名稱相符 + 必須是打勾的卡
             let matchedList = customCubeData.filter(item => 
                 fuzzyMatch(val, item.name) && checkedCards.includes(item.card)
             );
 
-            // 依照回饋率由高至低排序
             matchedList.sort((a, b) => b.rate - a.rate);
 
             if (matchedList.length > 0) {
