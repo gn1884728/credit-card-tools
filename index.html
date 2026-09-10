@@ -73,7 +73,7 @@
             </div>
             <div>
                 <label class="block text-gray-500 text-xs mb-2 font-bold">最優回饋率 (%)</label>
-                <!-- 改為 text 型態以支援顯示 "2 + 3" -->
+                <!-- 改為 text 型態以支援顯示 "3 + 2" -->
                 <input type="text" id="consumeRate" placeholder="例如: 3" class="w-full p-3 border border-gray-100 rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 font-bold shadow-sm" oninput="calcPoints()">
             </div>
         </div>
@@ -130,7 +130,7 @@
             })
             .catch(error => console.error('無法載入資料庫:', error));
 
-        // 【智慧封頂規則庫】已更新星巴克 2% 邏輯與 5000 元上限
+        // 【智慧封頂規則庫】
         function getPromoRule(name) {
             if (!name) return null;
             if (name.includes('麥當勞APP點餐')) {
@@ -174,7 +174,7 @@
                 resDiv.innerHTML = `✅ 找到 ${matchedList.length} 個適用方案 (已為您排序)：<br><br>` + 
                                    matchedList.map(m => {
                                        let rule = getPromoRule(m.name);
-                                       let rateDisplay = rule ? `(${rule.bonus * 100}% + ${rule.base * 100}%)` : `(${Number((m.rate * 100).toFixed(1))}%)`;
+                                       let rateDisplay = rule ? `(${rule.base * 100}% + ${rule.bonus * 100}%)` : `(${Number((m.rate * 100).toFixed(1))}%)`;
                                        let extraNote = rule ? ` ➔ ⚠️ 封頂提醒：${rule.desc}` : '';
                                        
                                        return `
@@ -188,7 +188,7 @@
                 // 設定回饋率輸入框
                 let topRule = getPromoRule(window.currentBestMatch.name);
                 if (topRule) {
-                    document.getElementById('consumeRate').value = `${topRule.bonus * 100} + ${topRule.base * 100}`;
+                    document.getElementById('consumeRate').value = `${topRule.base * 100} + ${topRule.bonus * 100}`;
                 } else {
                     document.getElementById('consumeRate').value = Number((window.currentBestMatch.rate * 100).toFixed(1)); 
                 }
@@ -212,7 +212,7 @@
             let isPromoCalc = false;
             let rule = window.currentBestMatch ? getPromoRule(window.currentBestMatch.name) : null;
 
-            if (rule && rateInput === `${rule.bonus * 100} + ${rule.base * 100}`) {
+            if (rule && rateInput === `${rule.base * 100} + ${rule.bonus * 100}`) {
                 let baseReward = amt * rule.base;
                 let bonusReward = Math.min(amt, rule.capAmt) * rule.bonus;
                 totalReward = baseReward + bonusReward;
