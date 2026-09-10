@@ -73,7 +73,7 @@
             </div>
             <div>
                 <label class="block text-gray-500 text-xs mb-2 font-bold">最優回饋率 (%)</label>
-                <!-- 改為 text 型態以支援顯示 "7.5 + 3" -->
+                <!-- 改為 text 型態以支援顯示 "2 + 3" -->
                 <input type="text" id="consumeRate" placeholder="例如: 3" class="w-full p-3 border border-gray-100 rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 font-bold shadow-sm" oninput="calcPoints()">
             </div>
         </div>
@@ -130,14 +130,14 @@
             })
             .catch(error => console.error('無法載入資料庫:', error));
 
-        // 【智慧封頂規則庫】辨識特殊加碼名單與上限
+        // 【智慧封頂規則庫】已更新星巴克 2% 邏輯與 5000 元上限
         function getPromoRule(name) {
             if (!name) return null;
             if (name.includes('麥當勞APP點餐')) {
-                return { base: 0.03, bonus: 0.075, capAmt: 1066, desc: "最高刷 $1,066 拿滿 7.5% 額外加碼" };
+                return { base: 0.03, bonus: 0.075, capAmt: 1066, desc: "最高刷 $1,066 拿滿 7.5% 額外加碼 (至10/31)" };
             }
             if (name.includes('星巴克儲值')) {
-                return { base: 0.02, bonus: 0.03, capAmt: 3333, desc: "最高刷 $3,333 拿滿 3% 額外加碼" };
+                return { base: 0.03, bonus: 0.02, capAmt: 5000, desc: "最高刷 $5,000 拿滿 2% 額外加碼 (至9/30)" };
             }
             return null;
         }
@@ -174,7 +174,6 @@
                 resDiv.innerHTML = `✅ 找到 ${matchedList.length} 個適用方案 (已為您排序)：<br><br>` + 
                                    matchedList.map(m => {
                                        let rule = getPromoRule(m.name);
-                                       // 若有規則顯示 7.5%+3%，若無則顯示一般 %數
                                        let rateDisplay = rule ? `(${rule.bonus * 100}% + ${rule.base * 100}%)` : `(${Number((m.rate * 100).toFixed(1))}%)`;
                                        let extraNote = rule ? ` ➔ ⚠️ 封頂提醒：${rule.desc}` : '';
                                        
@@ -213,14 +212,12 @@
             let isPromoCalc = false;
             let rule = window.currentBestMatch ? getPromoRule(window.currentBestMatch.name) : null;
 
-            // 若輸入框維持 "7.5 + 3" 格式，則啟用智慧拆單計算
             if (rule && rateInput === `${rule.bonus * 100} + ${rule.base * 100}`) {
                 let baseReward = amt * rule.base;
-                let bonusReward = Math.min(amt, rule.capAmt) * rule.bonus; // 超過封頂金額只算 base
+                let bonusReward = Math.min(amt, rule.capAmt) * rule.bonus;
                 totalReward = baseReward + bonusReward;
                 isPromoCalc = true;
             } else {
-                // 一般正常計算 (或使用者手動修改了 % 數)
                 let parsedRate = 0;
                 if (rateInput.includes('+')) {
                     let parts = rateInput.split('+');
@@ -231,7 +228,6 @@
                 totalReward = amt * (parsedRate / 100);
             }
 
-            // 渲染回饋結果與紅字警告
             let resultHtml = `預估回饋：${Math.round(totalReward)}`;
             if (isPromoCalc && amt > rule.capAmt) {
                 resultHtml += `<div class="text-xs text-rose-500 mt-2 font-bold tracking-wide">⚠️ 已超過加碼上限，超出部分僅以 ${rule.base * 100}% 計算</div>`;
