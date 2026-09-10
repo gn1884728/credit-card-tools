@@ -35,7 +35,7 @@
             <i class="fas fa-credit-card text-blue-600 mr-2"></i>信用卡切換速查
         </h2>
 
-        <!-- 🗂️ 我的信用卡車庫 (三大主力切換卡) -->
+        <!-- 🗂️ 我的信用卡車庫 -->
         <div class="mb-5 p-4 bg-gray-50 rounded-xl border border-gray-100">
             <label class="block text-gray-700 text-sm font-bold mb-3">請勾選您持有的信用卡：</label>
             <div class="grid grid-cols-2 gap-3 text-sm text-gray-600" id="cardCheckboxes">
@@ -59,7 +59,7 @@
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <i class="fas fa-search text-gray-400"></i>
             </div>
-            <input type="text" id="storeSearch" oninput="searchStore()" placeholder="輸入店名速查 (例如：TRIP、星巴克、高鐵)..." class="w-full pl-9 pr-4 py-3 border border-gray-100 rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 font-bold shadow-sm transition-colors">
+            <input type="text" id="storeSearch" oninput="searchStore()" placeholder="輸入店名速查 (例如：麥當勞、星巴克)..." class="w-full pl-9 pr-4 py-3 border border-gray-100 rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 font-bold shadow-sm transition-colors">
         </div>
         
         <!-- 搜尋結果顯示區 (預設隱藏) -->
@@ -73,12 +73,13 @@
             </div>
             <div>
                 <label class="block text-gray-500 text-xs mb-2 font-bold">最優回饋率 (%)</label>
-                <input type="number" step="0.1" id="consumeRate" placeholder="例如: 3.3" class="w-full p-3 border border-gray-100 rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 font-bold shadow-sm" oninput="calcPoints()">
+                <!-- 改為 text 型態以支援顯示 "7.5 + 3" -->
+                <input type="text" id="consumeRate" placeholder="例如: 3" class="w-full p-3 border border-gray-100 rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 font-bold shadow-sm" oninput="calcPoints()">
             </div>
         </div>
         
         <!-- 🌟 試算結果 -->
-        <div id="pointResult" class="text-center text-xl font-bold text-rose-600 py-4 bg-rose-50 rounded-xl mb-6 border border-rose-100 tracking-wide">
+        <div id="pointResult" class="text-center text-xl font-bold text-rose-600 py-4 bg-rose-50 rounded-xl mb-6 border border-rose-100 tracking-wide flex flex-col justify-center items-center min-h-[80px]">
             預估回饋：0
         </div>
 
@@ -108,6 +109,7 @@
     <!-- ======================================================= -->
     <script>
         let customCubeData = [];
+        window.currentBestMatch = null;
         
         // 讀取多卡資料庫
         fetch('cube_config.json')
@@ -128,7 +130,19 @@
             })
             .catch(error => console.error('無法載入資料庫:', error));
 
-        // 精準關鍵字比對 (解決 TRIP、英文大小寫與空格比對問題)
+        // 【智慧封頂規則庫】辨識特殊加碼名單與上限
+        function getPromoRule(name) {
+            if (!name) return null;
+            if (name.includes('麥當勞APP點餐')) {
+                return { base: 0.03, bonus: 0.075, capAmt: 1066, desc: "最高刷 $1,066 拿滿 7.5% 額外加碼" };
+            }
+            if (name.includes('星巴克儲值')) {
+                return { base: 0.02, bonus: 0.03, capAmt: 3333, desc: "最高刷 $3,333 拿滿 3% 額外加碼" };
+            }
+            return null;
+        }
+
+        // 精準關鍵字比對
         function searchMatch(val, name) {
             const keywords = val.trim().toLowerCase().split(/\s+/);
             const target = name.toLowerCase();
@@ -142,37 +156,88 @@
 
             if (!val || customCubeData.length === 0) { 
                 resDiv.classList.add('hidden'); 
+                window.currentBestMatch = null;
                 return; 
             }
 
-            // 過濾：名稱符合 + 必須為打勾卡片
+            // 過濾並排序
             let matchedList = customCubeData.filter(item => 
                 searchMatch(val, item.name) && checkedCards.includes(item.card)
             );
-
-            // 依照回饋率由高至低自動排序
             matchedList.sort((a, b) => b.rate - a.rate);
 
             if (matchedList.length > 0) {
                 resDiv.classList.remove('hidden'); 
-                // 保留精準小數位數 (如 3.3%、3.8%)
-                resDiv.innerHTML = `✅ 找到 ${matchedList.length} 個適用方案 (已為您排序)：<br><br>` + 
-                                   matchedList.map(m => `&bull; <b>[${m.card}]</b> ➔ 建議切換 <b>【${m.plan}】</b> (${Number((m.rate * 100).toFixed(1))}%)<br>`).join('');
+                window.currentBestMatch = matchedList[0];
                 
-                document.getElementById('consumeRate').value = Number((matchedList[0].rate * 100).toFixed(1)); 
+                // 動態渲染結果列表 (套用封頂規則顯示)
+                resDiv.innerHTML = `✅ 找到 ${matchedList.length} 個適用方案 (已為您排序)：<br><br>` + 
+                                   matchedList.map(m => {
+                                       let rule = getPromoRule(m.name);
+                                       // 若有規則顯示 7.5%+3%，若無則顯示一般 %數
+                                       let rateDisplay = rule ? `(${rule.bonus * 100}% + ${rule.base * 100}%)` : `(${Number((m.rate * 100).toFixed(1))}%)`;
+                                       let extraNote = rule ? ` ➔ ⚠️ 封頂提醒：${rule.desc}` : '';
+                                       
+                                       return `
+                                       <div class="mb-3">
+                                           &bull; <b>[${m.card}]</b> ➔ 建議切換 <b>【${m.plan}】</b> ${rateDisplay}<br>
+                                           <span class="ml-4 mt-1 inline-block text-xs text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-100">📌 適用：${m.name}${extraNote}</span>
+                                       </div>
+                                       `;
+                                   }).join('');
+                
+                // 設定回饋率輸入框
+                let topRule = getPromoRule(window.currentBestMatch.name);
+                if (topRule) {
+                    document.getElementById('consumeRate').value = `${topRule.bonus * 100} + ${topRule.base * 100}`;
+                } else {
+                    document.getElementById('consumeRate').value = Number((window.currentBestMatch.rate * 100).toFixed(1)); 
+                }
+                
                 calcPoints();
             } else { 
                 resDiv.classList.remove('hidden'); 
                 resDiv.innerHTML = `⚠️ 在您勾選的卡片中，未找到符合通路。`; 
                 document.getElementById('consumeRate').value = '';
+                window.currentBestMatch = null;
                 calcPoints();
             }
         }
 
+        // 智慧結算系統 (含超額判定)
         function calcPoints() {
             const amt = parseFloat(document.getElementById('consumeAmt').value) || 0; 
-            const rate = parseFloat(document.getElementById('consumeRate').value) || 0;
-            document.getElementById('pointResult').innerText = `預估回饋：${Math.round(amt * (rate / 100))}`;
+            const rateInput = document.getElementById('consumeRate').value.toString().trim();
+            
+            let totalReward = 0;
+            let isPromoCalc = false;
+            let rule = window.currentBestMatch ? getPromoRule(window.currentBestMatch.name) : null;
+
+            // 若輸入框維持 "7.5 + 3" 格式，則啟用智慧拆單計算
+            if (rule && rateInput === `${rule.bonus * 100} + ${rule.base * 100}`) {
+                let baseReward = amt * rule.base;
+                let bonusReward = Math.min(amt, rule.capAmt) * rule.bonus; // 超過封頂金額只算 base
+                totalReward = baseReward + bonusReward;
+                isPromoCalc = true;
+            } else {
+                // 一般正常計算 (或使用者手動修改了 % 數)
+                let parsedRate = 0;
+                if (rateInput.includes('+')) {
+                    let parts = rateInput.split('+');
+                    parsedRate = (parseFloat(parts[0]) || 0) + (parseFloat(parts[1]) || 0);
+                } else {
+                    parsedRate = parseFloat(rateInput) || 0;
+                }
+                totalReward = amt * (parsedRate / 100);
+            }
+
+            // 渲染回饋結果與紅字警告
+            let resultHtml = `預估回饋：${Math.round(totalReward)}`;
+            if (isPromoCalc && amt > rule.capAmt) {
+                resultHtml += `<div class="text-xs text-rose-500 mt-2 font-bold tracking-wide">⚠️ 已超過加碼上限，超出部分僅以 ${rule.base * 100}% 計算</div>`;
+            }
+            
+            document.getElementById('pointResult').innerHTML = resultHtml;
         }
     </script>
 </body>
