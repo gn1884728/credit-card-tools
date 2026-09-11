@@ -116,7 +116,7 @@
 
         const countryPlaceholders = {
             'TW': '輸入店名速查 (例如：麥當勞、星巴克)...',
-            'JP': '輸入店名速查 (例如：唐吉訶德、BicCamera)...',
+            'JP': '輸入店名速查 (例如：唐吉訶德、PayPay)...',
             'KR': '輸入店名速查 (例如：樂天免稅店、Olive Young)...',
             'TH': '輸入店名速查 (例如：泰國 7-11、Grab)...'
         };
@@ -136,25 +136,33 @@
             searchStore();
         }
 
-        // --- UI 美化：專屬 Logo 生成系統 ---
+        // --- UI 美化：專屬 Logo 生成系統 (已擴增所有台灣支付) ---
         function formatPaymentName(method) {
             let icon = '<i class="fas fa-credit-card text-gray-400 text-sm mr-2 mt-0.5 flex-shrink-0"></i>';
             
-            // 支付工具 Logo 攔截判斷 (由特定到通用)
-            if (method.includes('PayPay')) {
-                icon = '<span class="bg-[#FF0032] text-white text-[14px] w-[24px] h-[24px] flex items-center justify-center rounded-[6px] font-black italic mr-2 shadow-sm flex-shrink-0" style="font-family: Arial, sans-serif; padding-right: 2px;">P</span>';
+            if (method.includes('全盈Pay')) {
+                icon = '<span class="bg-[#00B1EB] text-white text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">全盈</span>';
+            }
+            else if (method.includes('全支付')) {
+                icon = '<span class="bg-[#FF6B00] text-white text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">全支付</span>';
+            }
+            else if (method.includes('iPass Money')) {
+                icon = '<span class="bg-[#008985] text-white text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">iPass</span>';
+            }
+            else if (method.includes('街口支付')) {
+                icon = '<span class="bg-[#E4002B] text-white text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">街口</span>';
             }
             else if (method.includes('台新Pay+')) {
                 icon = '<span class="bg-[#E60012] text-white text-[10px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">台新Pay+</span>';
+            }
+            else if (method.includes('玉山Wallet') || method.includes('玉山Unicard')) {
+                icon = '<span class="bg-[#009e86] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">玉山</span>';
             }
             else if (method.includes('CUBE')) {
                 icon = '<span class="bg-[#00a850] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">CUBE</span>';
             }
             else if (method.includes('Richart')) {
                 icon = '<span class="bg-[#ff0033] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">台新</span>';
-            }
-            else if (method.includes('玉山') || method.includes('Unicard')) {
-                icon = '<span class="bg-[#009e86] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">玉山</span>';
             }
             else if (method.includes('LINE Pay')) {
                 icon = '<i class="fab fa-line text-[#06C755] text-lg mr-2 mt-0.5 flex-shrink-0"></i>';
@@ -165,7 +173,6 @@
 
             let mainName = method;
             let subName = '';
-            // 切割出括號內的補充說明作為副標題
             if (method.includes('(') && method.includes(')')) {
                 let parts = method.split('(');
                 mainName = parts[0].trim();
