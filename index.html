@@ -70,8 +70,11 @@
         <!-- 💰 消費金額與回饋率 -->
         <div class="grid grid-cols-2 gap-4 mb-6">
             <div>
-                <label class="block text-gray-500 text-xs mb-2 font-bold">消費金額</label>
-                <input type="number" id="consumeAmt" placeholder="輸入金額" class="w-full p-3 border border-gray-100 rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 font-bold shadow-sm" oninput="calcPoints()">
+                <!-- 標題會依據國家動態改變 -->
+                <label class="block text-blue-800 text-xs mb-2 font-bold" id="amtLabel">消費金額 (台幣 TWD)</label>
+                <input type="number" id="consumeAmt" placeholder="輸入當地金額" class="w-full p-3 border border-gray-100 rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 font-bold shadow-sm" oninput="calcPoints()">
+                <!-- 即時匯率換算顯示區塊 -->
+                <div id="twdEstimate" class="mt-1.5 text-[10px] text-gray-500 font-bold hidden bg-blue-50 p-1.5 rounded-lg border border-blue-100 tracking-wide text-center"></div>
             </div>
             <div>
                 <label class="block text-gray-500 text-xs mb-2 font-bold">最優回饋率 (%)</label>
@@ -93,13 +96,33 @@
     </div>
 
     <!-- ======================================================= -->
-    <!-- 多國動態渲染邏輯 JS (含覆蓋引擎 & 浮點數修復) -->
+    <!-- 多國動態渲染邏輯 JS (含覆蓋引擎 & 即時匯率換算) -->
     <!-- ======================================================= -->
     <script>
         let globalDatabase = {}; 
         let currentCountryData = []; 
         window.currentBestMatch = null;
         let currentCountry = 'TW'; 
+        
+        // 💱 匯率與幣別引擎
+        let fxRates = { TWD: 1, JPY: 4.5, KRW: 42.0, THB: 1.05 }; // 備用基礎匯率
+        const countryCurrencyMap = {
+            'TW': { code: 'TWD', name: '台幣' },
+            'JP': { code: 'JPY', name: '日圓' },
+            'KR': { code: 'KRW', name: '韓元' },
+            'TH': { code: 'THB', name: '泰銖' }
+        };
+
+        // 載入時自動抓取最新匯率 (以台幣為基準)
+        fetch('https://api.exchangerate-api.com/v4/latest/TWD')
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.rates) {
+                    fxRates = data.rates;
+                    console.log("即時匯率載入成功:", fxRates);
+                }
+            })
+            .catch(error => console.error("匯率載入失敗，使用備用匯率", error));
         
         // 🔮 玉山 Unicard 專屬三層級規則庫
         const unicardConfig = {
@@ -126,13 +149,22 @@
         function setCountry(code, btn) {
             currentCountry = code;
             
+            // 變更按鈕外觀
             document.querySelectorAll('.country-btn').forEach(b => {
                 b.className = 'country-btn flex-shrink-0 bg-white text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-bold shadow-sm hover:bg-gray-50 transition-all';
             });
             btn.className = 'country-btn flex-shrink-0 bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-bold shadow-md transition-all transform scale-105';
             
+            // 變更店鋪 Placeholder
             document.getElementById('storeSearch').placeholder = countryPlaceholders[code];
             document.getElementById('storeSearch').value = '';
+            
+            // 💱 變更消費金額的幣別標籤並清空數值
+            let curr = countryCurrencyMap[code];
+            document.getElementById('amtLabel').innerText = `消費金額 (${curr.name} ${curr.code})`;
+            document.getElementById('consumeAmt').value = '';
+            document.getElementById('twdEstimate').classList.add('hidden'); // 切換國家時隱藏匯率提示
+            document.getElementById('pointResult').innerHTML = `預估回饋：0`;
             
             renderDynamicUI(code);
             searchStore();
@@ -181,7 +213,6 @@
                 checkboxContainer.innerHTML = paymentMethods.map(method => {
                     let extraDropdown = '';
                     
-                    // 玉山Unicard 選單
                     if (method.includes('玉山Unicard')) {
                         extraDropdown = `
                             <div class="mt-2.5 pt-2.5 border-t border-gray-100">
@@ -194,7 +225,6 @@
                             </div>
                         `;
                     } 
-                    // 全盈Pay 新舊戶選單
                     else if (method.includes('全盈Pay')) {
                         extraDropdown = `
                             <div class="mt-2.5 pt-2.5 border-t border-gray-100">
@@ -236,7 +266,6 @@
             }
         }
 
-        // 智慧判斷引擎：整合玉山與特定特店
         function getPromoRule(item) {
             if (!item) return null;
             if (item.name.includes('麥當勞APP點餐')) return { base: 0.03, bonus: 0.075, capAmt: 1066, desc: "最高刷 $1,066 拿滿 7.5% 額外加碼 (至10/31)" };
@@ -286,7 +315,6 @@
                     matchedList = matchedList.filter(m => m.card !== '玉山Unicard');
                     const uLevel = document.getElementById('unicardLevel') ? document.getElementById('unicardLevel').value : 'up';
                     const uConf = unicardConfig[uLevel];
-                    
                     matchedList.push({ 
                         card: "玉山Unicard", 
                         name: `${val} (海外實體通用)`, 
@@ -326,7 +354,6 @@
                 resDiv.innerHTML = `✅ 找到 ${matchedList.length} 個適用方案 (已為您排序)：<br><br>` + 
                                    matchedList.map(m => {
                                        let rule = getPromoRule(m); 
-                                       // 🚀 關鍵修復：使用 toFixed(2) 解決浮點數顯示誤差 (例如 3.500000000004%)
                                        let rateDisplay = rule ? `(${Number((rule.base * 100).toFixed(2))}% + ${Number((rule.bonus * 100).toFixed(2))}%)` : `(${Number((m.rate * 100).toFixed(2))}%)`;
                                        let extraNote = rule ? ` ➔ ⚠️ 封頂提醒：${rule.desc}` : '';
                                        
@@ -362,17 +389,38 @@
             }
         }
 
+        // 💱 包含即時匯率換算的精算系統
         function calcPoints() {
-            const amt = parseFloat(document.getElementById('consumeAmt').value) || 0; 
+            const rawInputAmt = parseFloat(document.getElementById('consumeAmt').value) || 0; 
             const rateInput = document.getElementById('consumeRate').value.toString().trim();
+            const estDiv = document.getElementById('twdEstimate');
             
+            // 匯率換算邏輯
+            let twdAmt = rawInputAmt;
+            const currCode = countryCurrencyMap[currentCountry].code;
+            
+            if (currentCountry !== 'TW' && fxRates[currCode]) {
+                // fxRates[currCode] 是以 TWD 為基準的匯率 (例如 JPY 是 4.5 左右，代表 1 TWD = 4.5 JPY)
+                twdAmt = rawInputAmt / fxRates[currCode];
+                if (rawInputAmt > 0) {
+                    let displayRate = (1 / fxRates[currCode]).toFixed(4); // 顯示 0.22 這種常見格式
+                    estDiv.innerHTML = `即時換算：約 <span class="text-blue-700">NT$ ${Math.round(twdAmt).toLocaleString()}</span> <span class="text-[9px] text-gray-400">(匯率 ${displayRate})</span>`;
+                    estDiv.classList.remove('hidden');
+                } else {
+                    estDiv.classList.add('hidden');
+                }
+            } else {
+                estDiv.classList.add('hidden');
+            }
+            
+            // 後續全部以台幣金額 (twdAmt) 進行回饋與封頂計算
             let totalReward = 0;
             let isPromoCalc = false;
             let rule = window.currentBestMatch ? getPromoRule(window.currentBestMatch) : null;
 
             if (rule && rateInput === `${rule.base * 100} + ${rule.bonus * 100}`) {
-                let baseReward = amt * rule.base;
-                let bonusReward = Math.min(amt, rule.capAmt) * rule.bonus; 
+                let baseReward = twdAmt * rule.base;
+                let bonusReward = Math.min(twdAmt, rule.capAmt) * rule.bonus; 
                 totalReward = baseReward + bonusReward;
                 isPromoCalc = true;
             } else {
@@ -383,11 +431,11 @@
                 } else {
                     parsedRate = parseFloat(rateInput) || 0;
                 }
-                totalReward = amt * (parsedRate / 100);
+                totalReward = twdAmt * (parsedRate / 100);
             }
 
             let resultHtml = `預估回饋：${Math.round(totalReward)}`;
-            if (isPromoCalc && amt > rule.capAmt) {
+            if (isPromoCalc && twdAmt > rule.capAmt) {
                 resultHtml += `<div class="text-xs text-rose-500 mt-2 font-bold tracking-wide">⚠️ 已超過加碼上限，超出部分僅以基本 ${rule.base * 100}% 計算</div>`;
             }
             
