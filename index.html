@@ -136,13 +136,16 @@
             searchStore();
         }
 
-        // --- UI 美化：專屬 Logo 生成系統 (已修復排序邏輯) ---
+        // --- UI 美化：專屬 Logo 生成系統 ---
         function formatPaymentName(method) {
             let icon = '<i class="fas fa-credit-card text-gray-400 text-sm mr-2 mt-0.5 flex-shrink-0"></i>';
             
-            // ⚠️ 關鍵修復：將 PayPay 移到最前方判斷，避免被後方的「玉山」字眼攔截
+            // 支付工具 Logo 攔截判斷 (由特定到通用)
             if (method.includes('PayPay')) {
                 icon = '<span class="bg-[#FF0032] text-white text-[14px] w-[24px] h-[24px] flex items-center justify-center rounded-[6px] font-black italic mr-2 shadow-sm flex-shrink-0" style="font-family: Arial, sans-serif; padding-right: 2px;">P</span>';
+            }
+            else if (method.includes('台新Pay+')) {
+                icon = '<span class="bg-[#E60012] text-white text-[10px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">台新Pay+</span>';
             }
             else if (method.includes('CUBE')) {
                 icon = '<span class="bg-[#00a850] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">CUBE</span>';
