@@ -109,7 +109,6 @@
             'up': { name: 'UP選', base: 0.01, bonus: 0.035, capAmt: 142857, desc: "最高刷14.2萬拿滿3.5%加碼" }
         };
 
-        // ✈️ 哩程卡動態設定表
         const hsbcConfig = {
             'infinite': { name: '旅人無限卡', tw: 18, overseas: 10 },
             'signature': { name: '旅人御璽卡', tw: 18, overseas: 15 },
@@ -119,7 +118,7 @@
         const starluxConfig = {
             'world': { name: '世界卡', tw: 20, overseas: 10, birthdayOverseas: 5 },
             'business': { name: '商務鈦金卡', tw: 25, overseas: 15, birthdayOverseas: 10 },
-            'titanium': { name: '鈦金卡', tw: 28, overseas: 20, birthdayOverseas: null } // 鈦金無生日加碼
+            'titanium': { name: '鈦金卡', tw: 28, overseas: 20, birthdayOverseas: null }
         };
 
         fetch('cube_config.json')
@@ -203,7 +202,6 @@
             `;
         }
 
-        // 🌟 處理星宇卡生日選單的顯示與隱藏
         window.toggleStarluxBirthday = function() {
             const level = document.getElementById('starluxLevel').value;
             const bdayDiv = document.getElementById('starluxBirthdayDiv');
@@ -211,9 +209,9 @@
             
             if (level === 'titanium') {
                 bdayDiv.classList.add('hidden');
-                bdayCheck.checked = false; // 鈦金卡強制作廢生日選項
+                if (bdayCheck) bdayCheck.checked = false;
             } else {
-                bdayDiv.classList.remove('hidden');
+                if (bdayDiv) bdayDiv.classList.remove('hidden');
             }
             searchStore();
         };
@@ -318,7 +316,6 @@
             }
             container.innerHTML = finalHtml;
 
-            // 確保切換國家時星宇生日選項的顯示狀態正確 (僅限海外顯示)
             const bdayDiv = document.getElementById('starluxBirthdayDiv');
             if (bdayDiv) {
                 const sLevel = document.getElementById('starluxLevel').value;
@@ -376,7 +373,7 @@
                 searchMatch(val, item.name) && checkedMethods.includes(item.card)
             );
 
-            // 🛡️ 國內外全通路自動打底神盾
+            // 🛡️ 國內外全通路保底機制
             const hasRichart = checkedMethods.some(m => m.includes('Richart') && !m.includes('台新Pay+'));
             const hasCube = checkedMethods.some(m => m.includes('CUBE'));
             const hasUnicard = checkedMethods.some(m => m.includes('玉山Unicard'));
@@ -402,6 +399,7 @@
                 }
                 if (hasStarlux && !matchedList.some(m => m.card.includes('星宇') && m.isBaseline)) {
                     matchedList.push({ card: "玉山星宇世界卡", name: `${val} (海外實體通用)`, plan: "海外消費", type: 'mileage', ratio: 10, unit: '哩', rate: MILEAGE_VALUATION/10, isBaseline: true });
+                    matchedList.push({ card: "玉山星宇世界卡", name: `${val} (生日月海外實體)`, plan: "專屬加碼", type: 'mileage', ratio: 5, unit: '哩', rate: MILEAGE_VALUATION/5, isBaseline: true });
                 }
                 if (hasDbs && !matchedList.some(m => m.card.includes('星展') && m.isBaseline)) {
                     matchedList.push({ card: "星展飛行世界之極卡", name: `${val} (海外實體通用)`, plan: "海外消費", type: 'mileage', ratio: 15, unit: '飛行基金', rate: MILEAGE_VALUATION/15, isBaseline: true });
@@ -445,20 +443,16 @@
                     m.card = "玉山星宇" + sConf.name;
                     
                     if (currentCountry === 'TW') {
-                        // 國內不套用生日加碼
                         if (m.name.includes('生日月')) return false; 
                         m.ratio = sConf.tw;
                         m.plan = "國內消費";
                     } else {
-                        // 海外邏輯
                         if (isBday && sConf.birthdayOverseas !== null) {
-                            // 若勾選生日，且該卡別有生日優惠 (排除鈦金)
                             m.ratio = sConf.birthdayOverseas;
                             m.plan = "🎂 生日月專屬加碼";
                             m.name = m.name.replace('(海外實體通用)', '(海外實體生日)');
                         } else {
-                            // 未勾選生日，或鈦金卡
-                            if (m.name.includes('生日月')) return false; // 隱藏原本 JSON 裡的生日選項，避免重複
+                            if (m.name.includes('生日月')) return false; 
                             m.ratio = sConf.overseas;
                             m.plan = "海外消費";
                         }
@@ -487,7 +481,7 @@
 
                                        let extraNote = rule ? ` ➔ ⚠️ 封頂提醒：${rule.desc}` : '';
                                        let badgeStyle = m.isBaseline ? 'text-indigo-600 bg-indigo-50 border-indigo-100' : 'text-rose-600 bg-rose-50 border-rose-100';
-                                       let badgeText = m.isBaseline ? `🛡️ 智能打底：${m.name}` : `📌 適用：${m.name}`;
+                                       let badgeText = m.isBaseline ? `🛡️ 通用保底：${m.name}` : `📌 適用：${m.name}`;
 
                                        return `
                                        <div class="mb-3">
