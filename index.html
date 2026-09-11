@@ -25,10 +25,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { padding-bottom: env(safe-area-inset-bottom); }
-        /* 隱藏捲動條但保留水平捲動功能，提升質感 */
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-        /* 美化多行省略 */
         .text-truncate-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     </style>
 </head>
@@ -40,7 +38,7 @@
             <i class="fas fa-credit-card text-blue-600 mr-2"></i>信用卡切換速查
         </h2>
 
-        <!-- 🌍 多國切換列 (炫技區塊) -->
+        <!-- 🌍 多國切換列 -->
         <div class="mb-5">
             <div class="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide" id="countrySelector">
                 <button onclick="setCountry('TW', this)" class="country-btn flex-shrink-0 bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-bold shadow-md transition-all transform scale-105">🇹🇼 台灣</button>
@@ -53,8 +51,7 @@
         <!-- 🗂️ 動態產生：我的支付車庫 -->
         <div class="mb-5 p-4 bg-gray-50 rounded-xl border border-gray-100">
             <label class="block text-gray-700 text-sm font-bold mb-3">請勾選該區可用的支付/信用卡：</label>
-            <!-- 升級版卡片式勾選區 -->
-            <div class="grid grid-cols-2 gap-2" id="cardCheckboxes">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-600" id="cardCheckboxes">
                 <div class="text-xs text-gray-400">載入中...</div>
             </div>
         </div>
@@ -67,7 +64,7 @@
             <input type="text" id="storeSearch" oninput="searchStore()" placeholder="輸入店名速查 (例如：麥當勞、星巴克)..." class="w-full pl-9 pr-4 py-3 border border-gray-100 rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 font-bold shadow-sm transition-colors">
         </div>
         
-        <!-- 搜尋結果顯示區 (預設隱藏) -->
+        <!-- 搜尋結果顯示區 -->
         <div id="storeResult" class="p-4 bg-blue-50 rounded-xl mb-5 text-sm font-bold text-blue-800 hidden border border-blue-100"></div>
         
         <!-- 💰 消費金額與回饋率 -->
@@ -78,7 +75,6 @@
             </div>
             <div>
                 <label class="block text-gray-500 text-xs mb-2 font-bold">最優回饋率 (%)</label>
-                <!-- 改為 text 型態以支援顯示 "3 + 2" -->
                 <input type="text" id="consumeRate" placeholder="例如: 3" class="w-full p-3 border border-gray-100 rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 font-bold shadow-sm" oninput="calcPoints()">
             </div>
         </div>
@@ -97,7 +93,7 @@
     </div>
 
     <!-- ======================================================= -->
-    <!-- 多國動態渲染邏輯 JS (含專屬 Logo 生成) -->
+    <!-- 多國動態渲染邏輯 JS (含玉山動態覆蓋引擎) -->
     <!-- ======================================================= -->
     <script>
         let globalDatabase = {}; 
@@ -105,7 +101,13 @@
         window.currentBestMatch = null;
         let currentCountry = 'TW'; 
         
-        // 讀取全新多國資料庫
+        // 🔮 玉山 Unicard 專屬三層級規則庫 (1%無上限 + 額外加碼上限)
+        const unicardConfig = {
+            'simple': { name: '簡單選', base: 0.01, bonus: 0.02, capAmt: 50000, desc: "最高刷5萬拿滿2%加碼 (基本1%無上限)" },
+            'any': { name: '任意選', base: 0.01, bonus: 0.025, capAmt: 40000, desc: "⚠️須APP自選特店！最高刷4萬拿滿2.5%加碼" },
+            'up': { name: 'UP選', base: 0.01, bonus: 0.035, capAmt: 142857, desc: "最高刷14.2萬拿滿3.5%加碼 (基本1%無上限)" }
+        };
+
         fetch('cube_config.json')
             .then(response => response.json())
             .then(data => {
@@ -116,7 +118,7 @@
 
         const countryPlaceholders = {
             'TW': '輸入店名速查 (例如：麥當勞、星巴克)...',
-            'JP': '輸入店名速查 (例如：唐吉訶德、PayPay)...',
+            'JP': '輸入店名速查 (例如：松本清、唐吉訶德、BicCamera)...',
             'KR': '輸入店名速查 (例如：樂天免稅店、Olive Young)...',
             'TH': '輸入店名速查 (例如：泰國 7-11、Grab)...'
         };
@@ -136,40 +138,20 @@
             searchStore();
         }
 
-        // --- UI 美化：專屬 Logo 生成系統 (已擴增所有台灣支付) ---
         function formatPaymentName(method) {
             let icon = '<i class="fas fa-credit-card text-gray-400 text-sm mr-2 mt-0.5 flex-shrink-0"></i>';
             
-            if (method.includes('全盈Pay')) {
-                icon = '<span class="bg-[#00B1EB] text-white text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">全盈</span>';
-            }
-            else if (method.includes('全支付')) {
-                icon = '<span class="bg-[#FF6B00] text-white text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">全支付</span>';
-            }
-            else if (method.includes('iPass Money')) {
-                icon = '<span class="bg-[#008985] text-white text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">iPass</span>';
-            }
-            else if (method.includes('街口支付')) {
-                icon = '<span class="bg-[#E4002B] text-white text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">街口</span>';
-            }
-            else if (method.includes('台新Pay+')) {
-                icon = '<span class="bg-[#E60012] text-white text-[10px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">台新Pay+</span>';
-            }
-            else if (method.includes('玉山Wallet') || method.includes('玉山Unicard')) {
-                icon = '<span class="bg-[#009e86] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">玉山</span>';
-            }
-            else if (method.includes('CUBE')) {
-                icon = '<span class="bg-[#00a850] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">CUBE</span>';
-            }
-            else if (method.includes('Richart')) {
-                icon = '<span class="bg-[#ff0033] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">台新</span>';
-            }
-            else if (method.includes('LINE Pay')) {
-                icon = '<i class="fab fa-line text-[#06C755] text-lg mr-2 mt-0.5 flex-shrink-0"></i>';
-            }
-            else if (method.includes('TrueMoney')) {
-                icon = '<span class="bg-[#f26522] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">True</span>';
-            }
+            if (method.includes('PayPay')) icon = '<span class="bg-[#FF0032] text-white text-[14px] w-[24px] h-[24px] flex items-center justify-center rounded-[6px] font-black italic mr-2 shadow-sm flex-shrink-0" style="font-family: Arial, sans-serif; padding-right: 2px;">P</span>';
+            else if (method.includes('全盈Pay')) icon = '<span class="bg-[#00B1EB] text-white text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">全盈</span>';
+            else if (method.includes('全支付')) icon = '<span class="bg-[#FF6B00] text-white text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">全支付</span>';
+            else if (method.includes('iPass Money')) icon = '<span class="bg-[#008985] text-white text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">iPass</span>';
+            else if (method.includes('街口支付')) icon = '<span class="bg-[#E4002B] text-white text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">街口</span>';
+            else if (method.includes('台新Pay+')) icon = '<span class="bg-[#E60012] text-white text-[10px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">台新Pay+</span>';
+            else if (method.includes('玉山Wallet') || method.includes('玉山Unicard')) icon = '<span class="bg-[#009e86] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">玉山</span>';
+            else if (method.includes('CUBE')) icon = '<span class="bg-[#00a850] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">CUBE</span>';
+            else if (method.includes('Richart')) icon = '<span class="bg-[#ff0033] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">台新</span>';
+            else if (method.includes('LINE Pay')) icon = '<i class="fab fa-line text-[#06C755] text-lg mr-2 mt-0.5 flex-shrink-0"></i>';
+            else if (method.includes('TrueMoney')) icon = '<span class="bg-[#f26522] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">True</span>';
 
             let mainName = method;
             let subName = '';
@@ -196,13 +178,32 @@
             
             const checkboxContainer = document.getElementById('cardCheckboxes');
             if (paymentMethods.length > 0) {
-                // 將核取方塊升級為卡片式外觀
-                checkboxContainer.innerHTML = paymentMethods.map(method => `
-                    <label class="flex items-center cursor-pointer bg-white p-2.5 border border-gray-200 rounded-xl shadow-sm hover:border-blue-400 transition-colors w-full">
-                        <input type="checkbox" value="${method}" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 mr-2 flex-shrink-0" onchange="searchStore()">
-                        ${formatPaymentName(method)}
-                    </label>
-                `).join('');
+                checkboxContainer.innerHTML = paymentMethods.map(method => {
+                    let extraDropdown = '';
+                    // 偵測到玉山卡別，自動在下方插入獨立的下拉選單
+                    if (method.includes('玉山Unicard')) {
+                        extraDropdown = `
+                            <div class="mt-2.5 pt-2.5 border-t border-gray-100">
+                                <label class="text-[10px] text-gray-400 font-bold mb-1 block">設定我的 Unicard 權益等級：</label>
+                                <select id="unicardLevel" class="w-full text-xs border border-emerald-200 rounded-lg p-2 bg-emerald-50 text-emerald-800 font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500 shadow-sm" onchange="searchStore()">
+                                    <option value="up" selected>🏆 UP選 (最高 4.5% / 上限14.2萬)</option>
+                                    <option value="any">🎯 任意選 (最高 3.5% / 上限4萬)</option>
+                                    <option value="simple">🔰 簡單選 (最高 3% / 上限5萬)</option>
+                                </select>
+                            </div>
+                        `;
+                    }
+                    
+                    return `
+                        <div class="flex flex-col bg-white p-3 border border-gray-200 rounded-xl shadow-sm hover:border-blue-400 transition-colors w-full">
+                            <label class="flex items-center cursor-pointer w-full">
+                                <input type="checkbox" value="${method}" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 mr-2 flex-shrink-0" onchange="searchStore()">
+                                ${formatPaymentName(method)}
+                            </label>
+                            ${extraDropdown}
+                        </div>
+                    `;
+                }).join('');
             } else {
                 checkboxContainer.innerHTML = `<div class="text-xs text-rose-500 col-span-2 p-3 bg-rose-50 rounded-xl border border-rose-100">目前該區尚無資料</div>`;
             }
@@ -222,14 +223,16 @@
             }
         }
 
-        // 【智慧封頂規則庫】
-        function getPromoRule(name) {
-            if (!name) return null;
-            if (name.includes('麥當勞APP點餐')) {
-                return { base: 0.03, bonus: 0.075, capAmt: 1066, desc: "最高刷 $1,066 拿滿 7.5% 額外加碼 (至10/31)" };
-            }
-            if (name.includes('星巴克儲值')) {
-                return { base: 0.03, bonus: 0.02, capAmt: 5000, desc: "最高刷 $5,000 拿滿 2% 額外加碼 (至9/30)" };
+        // 智慧判斷引擎：將玉山邏輯整合進拆單計算
+        function getPromoRule(item) {
+            if (!item) return null;
+            if (item.name.includes('麥當勞APP點餐')) return { base: 0.03, bonus: 0.075, capAmt: 1066, desc: "最高刷 $1,066 拿滿 7.5% 額外加碼 (至10/31)" };
+            if (item.name.includes('星巴克儲值')) return { base: 0.03, bonus: 0.02, capAmt: 5000, desc: "最高刷 $5,000 拿滿 2% 額外加碼 (至9/30)" };
+            
+            // 偵測是否為玉山Unicard，直接返回對應等級的 Base與Bonus 參數
+            if (item.card === '玉山Unicard') {
+                const uLevel = document.getElementById('unicardLevel') ? document.getElementById('unicardLevel').value : 'up';
+                return unicardConfig[uLevel];
             }
             return null;
         }
@@ -245,15 +248,56 @@
             const resDiv = document.getElementById('storeResult');
             const checkedMethods = Array.from(document.querySelectorAll('#cardCheckboxes input:checked')).map(cb => cb.value);
 
-            if (!val || currentCountryData.length === 0) { 
+            if (!val) { 
                 resDiv.classList.add('hidden'); 
                 window.currentBestMatch = null;
                 return; 
             }
 
+            // 1. 先抓出一般吻合項目
             let matchedList = currentCountryData.filter(item => 
                 searchMatch(val, item.name) && checkedMethods.includes(item.card)
             );
+
+            // 2. 🛡️ 海外全通路自動打底神盾
+            if (currentCountry !== 'TW') {
+                const hasRichart = checkedMethods.some(m => m.includes('Richart') && !m.includes('台新Pay+'));
+                const hasCube = checkedMethods.some(m => m.includes('CUBE'));
+                const hasUnicard = checkedMethods.some(m => m.includes('玉山Unicard'));
+
+                if (hasRichart && !matchedList.some(m => m.card.includes('Richart') && m.plan === '玩旅刷')) {
+                    matchedList.push({ card: "台新Richart", name: `${val} (實體/線上通用)`, plan: "玩旅刷", rate: 0.033, isBaseline: true });
+                }
+                if (hasCube && !matchedList.some(m => m.card.includes('CUBE') && m.plan === '趣旅行')) {
+                    matchedList.push({ card: "CUBE卡", name: `${val} (海外實體通用)`, plan: "趣旅行", rate: 0.03, isBaseline: true });
+                }
+                if (hasUnicard) {
+                    // 自動排除 JSON 裡的死板玉山設定，改由動態神盾接管
+                    matchedList = matchedList.filter(m => m.card !== '玉山Unicard');
+                    const uLevel = document.getElementById('unicardLevel') ? document.getElementById('unicardLevel').value : 'up';
+                    const uConf = unicardConfig[uLevel];
+                    
+                    matchedList.push({ 
+                        card: "玉山Unicard", 
+                        name: `${val} (海外實體通用)`, 
+                        plan: uConf.name, 
+                        rate: uConf.base + uConf.bonus, // 真實回饋率：1% + Bonus%
+                        isBaseline: true 
+                    });
+                }
+            }
+
+            // 3. 🎯 玉山動態覆蓋引擎：無論哪一國，遇到玉山卡就動態賦予當前選單的趴數
+            matchedList.forEach(m => {
+                if (m.card === '玉山Unicard') {
+                    const uLevel = document.getElementById('unicardLevel') ? document.getElementById('unicardLevel').value : 'up';
+                    const uConf = unicardConfig[uLevel];
+                    m.rate = uConf.base + uConf.bonus; // 即時變換回饋率
+                    m.plan = uConf.name; // 即時變更方案名稱
+                }
+            });
+
+            // 覆蓋完畢後重新大排序
             matchedList.sort((a, b) => b.rate - a.rate);
 
             if (matchedList.length > 0) {
@@ -262,19 +306,26 @@
                 
                 resDiv.innerHTML = `✅ 找到 ${matchedList.length} 個適用方案 (已為您排序)：<br><br>` + 
                                    matchedList.map(m => {
-                                       let rule = getPromoRule(m.name);
+                                       let rule = getPromoRule(m); // 傳入物件供玉山引擎辨識
                                        let rateDisplay = rule ? `(${rule.base * 100}% + ${rule.bonus * 100}%)` : `(${Number((m.rate * 100).toFixed(1))}%)`;
                                        let extraNote = rule ? ` ➔ ⚠️ 封頂提醒：${rule.desc}` : '';
                                        
+                                       let badgeStyle = m.isBaseline 
+                                           ? 'text-indigo-600 bg-indigo-50 border-indigo-100' 
+                                           : 'text-rose-600 bg-rose-50 border-rose-100';
+                                       let badgeText = m.isBaseline 
+                                           ? `🛡️ 海外實體打底：${m.name}` 
+                                           : `📌 適用：${m.name}`;
+
                                        return `
                                        <div class="mb-3">
                                            &bull; <b>[${m.card.replace(/ \(.+\)/, '')}]</b> ➔ 建議切換 <b>【${m.plan}】</b> ${rateDisplay}<br>
-                                           <span class="ml-4 mt-1 inline-block text-xs text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-100">📌 適用：${m.name}${extraNote}</span>
+                                           <span class="ml-4 mt-1 inline-block text-xs ${badgeStyle} px-2 py-0.5 rounded border">${badgeText}${extraNote}</span>
                                        </div>
                                        `;
                                    }).join('');
                 
-                let topRule = getPromoRule(window.currentBestMatch.name);
+                let topRule = getPromoRule(window.currentBestMatch);
                 if (topRule) {
                     document.getElementById('consumeRate').value = `${topRule.base * 100} + ${topRule.bonus * 100}`;
                 } else {
@@ -291,18 +342,17 @@
             }
         }
 
-        // 智慧結算系統
         function calcPoints() {
             const amt = parseFloat(document.getElementById('consumeAmt').value) || 0; 
             const rateInput = document.getElementById('consumeRate').value.toString().trim();
             
             let totalReward = 0;
             let isPromoCalc = false;
-            let rule = window.currentBestMatch ? getPromoRule(window.currentBestMatch.name) : null;
+            let rule = window.currentBestMatch ? getPromoRule(window.currentBestMatch) : null;
 
             if (rule && rateInput === `${rule.base * 100} + ${rule.bonus * 100}`) {
                 let baseReward = amt * rule.base;
-                let bonusReward = Math.min(amt, rule.capAmt) * rule.bonus;
+                let bonusReward = Math.min(amt, rule.capAmt) * rule.bonus; // 加碼部分卡上限
                 totalReward = baseReward + bonusReward;
                 isPromoCalc = true;
             } else {
@@ -318,7 +368,7 @@
 
             let resultHtml = `預估回饋：${Math.round(totalReward)}`;
             if (isPromoCalc && amt > rule.capAmt) {
-                resultHtml += `<div class="text-xs text-rose-500 mt-2 font-bold tracking-wide">⚠️ 已超過加碼上限，超出部分僅以 ${rule.base * 100}% 計算</div>`;
+                resultHtml += `<div class="text-xs text-rose-500 mt-2 font-bold tracking-wide">⚠️ 已超過加碼上限，超出部分僅以基本 ${rule.base * 100}% 計算</div>`;
             }
             
             document.getElementById('pointResult').innerHTML = resultHtml;
