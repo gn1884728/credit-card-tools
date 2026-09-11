@@ -18,6 +18,10 @@
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         .text-truncate-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        /* 圖片載入失敗時的預設隱藏樣式 */
+        img.fallback-icon { display: none; }
+        img.loaded { display: block; width: 36px; height: 24px; object-fit: cover; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); margin-right: 8px; margin-top: 2px; flex-shrink: 0; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen font-sans flex justify-center items-start pt-10 px-4">
@@ -38,12 +42,9 @@
             </div>
         </div>
 
-        <!-- 🗂️ 動態產生：我的支付車庫 -->
-        <div class="mb-5 p-4 bg-gray-50 rounded-xl border border-gray-100">
-            <label class="block text-gray-700 text-sm font-bold mb-3">請勾選該區可用的支付/信用卡：</label>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-600" id="cardCheckboxes">
-                <div class="text-xs text-gray-400">載入中...</div>
-            </div>
+        <!-- 🗂️ 動態產生：我的支付車庫 (三大分類新架構) -->
+        <div class="mb-6" id="garageContainer">
+            <div class="text-center text-xs text-gray-400 py-4">載入支付車庫中...</div>
         </div>
 
         <!-- 🔍 搜尋店名 -->
@@ -75,26 +76,13 @@
             預估回饋：0
         </div>
 
-        <!-- 🚀 查無特店回報區塊 -->
-        <div class="border-t border-gray-100 pt-5 mt-2">
-            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-100 flex items-center justify-between">
-                <div>
-                    <h4 class="text-sm font-bold text-blue-800 mb-1">查無特店？歡迎回報 🚀</h4>
-                    <p class="text-xs text-gray-500 font-bold">提供截圖，擴大資料庫</p>
-                </div>
-                <a href="https://forms.gle/xLTZqzGPGXib2zYj6" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 px-4 rounded-lg shadow transition-colors whitespace-nowrap">
-                    提供截圖
-                </a>
-            </div>
-        </div>
-
         <div class="text-center mt-6">
             <a href="https://fongarea.com" target="_blank" class="text-xs text-gray-400 hover:text-blue-500 font-bold transition-colors">&copy; 2026 瘋哥的3c盒子</a>
         </div>
     </div>
 
     <!-- ======================================================= -->
-    <!-- 多國動態渲染邏輯 JS (含頂級哩程卡官方真實色調還原) -->
+    <!-- JS 邏輯區 (含分類引擎與真實圖片載入機制) -->
     <!-- ======================================================= -->
     <script>
         let globalDatabase = {}; 
@@ -102,7 +90,6 @@
         window.currentBestMatch = null;
         let currentCountry = 'TW'; 
         
-        // 🔮 系統核心參數設定
         const MILEAGE_VALUATION = 0.5; 
 
         let fxRates = { TWD: 1, JPY: 4.5, KRW: 42.0, THB: 1.05 }; 
@@ -156,31 +143,34 @@
             searchStore();
         }
 
-        // 🎨 信用卡 Logo 尊榮視覺升級引擎 (真實色調版)
-        function formatPaymentName(method) {
-            let icon = '<i class="fas fa-credit-card text-gray-400 text-sm mr-2 mt-0.5 flex-shrink-0"></i>';
+        // 🎨 真實照片載入引擎 + CSS備案
+        function formatPaymentNameWithImage(method) {
+            let imgFileName = null;
+            let cssFallback = '<i class="fas fa-credit-card text-gray-400 text-sm mr-2 mt-0.5 flex-shrink-0" id="fallback-'+method+'"></i>';
+
+            // 1. 圖片對應表 (您可以隨時把真實圖檔放入 images 資料夾)
+            if (method.includes('玉山星宇')) imgFileName = 'starlux.png';
+            else if (method.includes('星展飛行')) imgFileName = 'dbs.png';
+            else if (method.includes('滙豐') || method.includes('旅人')) imgFileName = 'hsbc.png';
+            else if (method.includes('CUBE')) imgFileName = 'cube.png';
+            else if (method.includes('玉山Unicard')) imgFileName = 'unicard.png';
+            else if (method.includes('PayPay')) imgFileName = 'paypay.png';
             
-            // 行動支付
-            if (method.includes('PayPay')) icon = '<span class="bg-[#FF0032] text-white text-[14px] w-[24px] h-[24px] flex items-center justify-center rounded-[6px] font-black italic mr-2 shadow-sm flex-shrink-0" style="font-family: Arial, sans-serif; padding-right: 2px;">P</span>';
-            else if (method.includes('全盈Pay')) icon = '<span class="bg-[#00B1EB] text-white text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">全盈</span>';
-            else if (method.includes('全支付')) icon = '<span class="bg-[#FF6B00] text-white text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">全支付</span>';
-            else if (method.includes('iPass Money')) icon = '<span class="bg-[#008985] text-white text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">iPass</span>';
-            else if (method.includes('街口支付')) icon = '<span class="bg-[#E4002B] text-white text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">街口</span>';
-            else if (method.includes('台新Pay+')) icon = '<span class="bg-[#E60012] text-white text-[10px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">台新Pay+</span>';
-            
-            // ✈️ 頂級哩程神卡 (擷取自官方圖檔真實色碼)
-            else if (method.includes('玉山星宇')) icon = '<span class="bg-[#8E8B82] text-white border border-[#5A5853] text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0 flex items-center"><i class="fas fa-plane text-[8px] mr-1"></i>星宇</span>';
-            else if (method.includes('星展飛行')) icon = '<span class="bg-black text-white border border-gray-600 text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0 flex items-center"><span class="text-white mr-0.5 font-sans font-normal">X</span>星展</span>';
-            else if (method.includes('滙豐') || method.includes('旅人')) icon = '<span class="bg-gradient-to-r from-[#1E2B2A] to-[#3A4A49] text-white border border-[#859897] text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0 flex items-center">HSBC 旅人</span>';
-            
-            // 一般信用卡
-            else if (method.includes('玉山') || method.includes('Unicard')) icon = '<span class="bg-[#009e86] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">玉山</span>';
-            else if (method.includes('CUBE')) icon = '<span class="bg-[#00a850] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">CUBE</span>';
-            else if (method.includes('Richart')) icon = '<span class="bg-[#ff0033] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">台新</span>';
-            
-            // 海外當地支付
-            else if (method.includes('LINE Pay')) icon = '<i class="fab fa-line text-[#06C755] text-lg mr-2 mt-0.5 flex-shrink-0"></i>';
-            else if (method.includes('TrueMoney')) icon = '<span class="bg-[#f26522] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">True</span>';
+            // 2. 如果沒有圖片，或是圖片載入失敗，就顯示 CSS 備案
+            if (method.includes('PayPay')) cssFallback = '<span class="bg-[#FF0032] text-white text-[14px] w-[24px] h-[24px] flex items-center justify-center rounded-[6px] font-black italic mr-2 shadow-sm flex-shrink-0">P</span>';
+            else if (method.includes('全盈Pay')) cssFallback = '<span class="bg-[#00B1EB] text-white text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">全盈</span>';
+            else if (method.includes('全支付')) cssFallback = '<span class="bg-[#FF6B00] text-white text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">全支付</span>';
+            else if (method.includes('iPass Money')) cssFallback = '<span class="bg-[#008985] text-white text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">iPass</span>';
+            else if (method.includes('街口支付')) cssFallback = '<span class="bg-[#E4002B] text-white text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">街口</span>';
+            else if (method.includes('台新Pay+')) cssFallback = '<span class="bg-[#E60012] text-white text-[10px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">台新Pay+</span>';
+            else if (method.includes('玉山星宇')) cssFallback = '<span class="bg-[#8E8B82] text-white border border-[#5A5853] text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0 flex items-center"><i class="fas fa-plane text-[8px] mr-1"></i>星宇</span>';
+            else if (method.includes('星展飛行')) cssFallback = '<span class="bg-black text-white border border-gray-600 text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0 flex items-center"><span class="text-white mr-0.5 font-sans font-normal">X</span>星展</span>';
+            else if (method.includes('滙豐') || method.includes('旅人')) cssFallback = '<span class="bg-gradient-to-r from-[#1E2B2A] to-[#3A4A49] text-white border border-[#859897] text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0 flex items-center">HSBC 旅人</span>';
+            else if (method.includes('玉山') || method.includes('Unicard')) cssFallback = '<span class="bg-[#009e86] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">玉山</span>';
+            else if (method.includes('CUBE')) cssFallback = '<span class="bg-[#00a850] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">CUBE</span>';
+            else if (method.includes('Richart')) cssFallback = '<span class="bg-[#ff0033] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">台新</span>';
+            else if (method.includes('LINE Pay')) cssFallback = '<i class="fab fa-line text-[#06C755] text-lg mr-2 mt-0.5 flex-shrink-0"></i>';
+            else if (method.includes('TrueMoney')) cssFallback = '<span class="bg-[#f26522] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">True</span>';
 
             let mainName = method, subName = '';
             if (method.includes('(') && method.includes(')')) {
@@ -189,10 +179,16 @@
                 subName = '(' + parts[1];
             }
 
+            // 若有對應圖片，嘗試載入；若失敗則顯示 cssFallback
+            let imgTag = imgFileName 
+                ? `<img src="images/${imgFileName}" class="fallback-icon" onload="this.className='loaded'; this.nextElementSibling.style.display='none';" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">`
+                : '';
+
             return `
                 <div class="flex items-start w-full">
-                    ${icon}
-                    <div class="flex flex-col flex-1 overflow-hidden">
+                    ${imgTag}
+                    <div style="${imgFileName ? 'display:none;' : 'display:flex;'}">${cssFallback}</div>
+                    <div class="flex flex-col flex-1 overflow-hidden ml-1">
                         <span class="font-bold text-[13px] text-gray-800 truncate">${mainName}</span>
                         ${subName ? `<span class="text-[9px] text-gray-400 font-normal leading-tight text-truncate-2 mt-0.5">${subName}</span>` : ''}
                     </div>
@@ -203,42 +199,62 @@
         function renderDynamicUI(countryCode) {
             const countryObj = globalDatabase[countryCode] || {};
             const paymentMethods = Object.keys(countryObj);
-            const checkboxContainer = document.getElementById('cardCheckboxes');
+            const container = document.getElementById('garageContainer');
             
-            if (paymentMethods.length > 0) {
-                checkboxContainer.innerHTML = paymentMethods.map(method => {
-                    let extraDropdown = '';
-                    if (method.includes('玉山Unicard')) {
-                        extraDropdown = `
-                            <div class="mt-2.5 pt-2.5 border-t border-gray-100">
-                                <select id="unicardLevel" class="w-full text-xs border border-emerald-200 rounded-lg p-2 bg-emerald-50 text-emerald-800 font-bold" onchange="searchStore()">
-                                    <option value="up" selected>🏆 UP選 (最高 4.5%)</option>
-                                    <option value="any">🎯 任意選 (最高 3.5%)</option>
-                                    <option value="simple">🔰 簡單選 (最高 3%)</option>
-                                </select>
-                            </div>`;
-                    } else if (method.includes('全盈Pay')) {
-                        extraDropdown = `
-                            <div class="mt-2.5 pt-2.5 border-t border-gray-100">
-                                <select id="pluspayLevel" class="w-full text-xs border border-blue-200 rounded-lg p-2 bg-blue-50 text-blue-800 font-bold" onchange="searchStore()">
-                                    <option value="old" selected>👤 舊戶 (最高 18.5%)</option>
-                                    <option value="new">🌟 新戶 (最高 28.5%)</option>
-                                </select>
-                            </div>`;
-                    }
-                    return `
-                        <div class="flex flex-col bg-white p-3 border border-gray-200 rounded-xl shadow-sm hover:border-blue-400 transition-colors w-full">
-                            <label class="flex items-center cursor-pointer w-full">
-                                <input type="checkbox" value="${method}" checked class="w-4 h-4 text-blue-600 rounded mr-2 flex-shrink-0" onchange="searchStore()">
-                                ${formatPaymentName(method)}
-                            </label>
-                            ${extraDropdown}
-                        </div>`;
-                }).join('');
-            } else {
-                checkboxContainer.innerHTML = `<div class="text-xs text-rose-500 col-span-2 p-3 bg-rose-50 rounded-xl border border-rose-100">目前該區尚無資料</div>`;
+            if (paymentMethods.length === 0) {
+                container.innerHTML = `<div class="text-xs text-rose-500 p-3 bg-rose-50 rounded-xl border border-rose-100 text-center">目前該區尚無資料</div>`;
+                return;
             }
 
+            // 🎯 三大陣營分類邏輯
+            let categories = {
+                mobile: { title: '📱 行動支付', items: [], color: 'bg-blue-50 border-blue-100 text-blue-800' },
+                mileage: { title: '✈️ 航空哩程卡', items: [], color: 'bg-slate-100 border-slate-200 text-slate-800' },
+                cashback: { title: '💰 點數 / 現金回饋', items: [], color: 'bg-emerald-50 border-emerald-100 text-emerald-800' }
+            };
+
+            // 分派卡片到對應陣營
+            paymentMethods.forEach(method => {
+                let htmlBlock = buildCheckboxBlock(method);
+                
+                let isMileage = false;
+                // 檢查是否為哩程卡 (掃描內部 plan)
+                for (const plan in countryObj[method]) {
+                    if (countryObj[method][plan].some(store => store.type === 'mileage')) {
+                        isMileage = true;
+                        break;
+                    }
+                }
+
+                if (isMileage) {
+                    categories.mileage.items.push(htmlBlock);
+                } else if (/Pay|支付|Wallet|iPass|街口|TrueMoney/i.test(method)) {
+                    categories.mobile.items.push(htmlBlock);
+                } else {
+                    categories.cashback.items.push(htmlBlock);
+                }
+            });
+
+            // 渲染分類區塊
+            let finalHtml = '';
+            for (let catKey in categories) {
+                let cat = categories[catKey];
+                if (cat.items.length > 0) {
+                    finalHtml += `
+                        <div class="mb-4">
+                            <h3 class="text-xs font-bold px-3 py-1.5 rounded-t-lg border-b-0 border inline-block ${cat.color}">
+                                ${cat.title}
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 p-3 rounded-b-lg rounded-tr-lg border ${cat.color.replace('text-', 'border-').split(' ')[1]} bg-white/50">
+                                ${cat.items.join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            container.innerHTML = finalHtml;
+
+            // 扁平化資料供搜尋使用
             currentCountryData = [];
             for (const method in countryObj) {
                 for (const plan in countryObj[method]) {
@@ -257,6 +273,37 @@
                     });
                 }
             }
+        }
+
+        // 獨立組裝核取方塊與下拉選單
+        function buildCheckboxBlock(method) {
+            let extraDropdown = '';
+            if (method.includes('玉山Unicard')) {
+                extraDropdown = `
+                    <div class="mt-2.5 pt-2.5 border-t border-gray-100">
+                        <select id="unicardLevel" class="w-full text-[11px] border border-emerald-200 rounded-md p-1.5 bg-emerald-50 text-emerald-800 font-bold focus:outline-none" onchange="searchStore()">
+                            <option value="up" selected>🏆 UP選 (最高4.5%)</option>
+                            <option value="any">🎯 任意選 (最高3.5%)</option>
+                            <option value="simple">🔰 簡單選 (最高3%)</option>
+                        </select>
+                    </div>`;
+            } else if (method.includes('全盈Pay')) {
+                extraDropdown = `
+                    <div class="mt-2.5 pt-2.5 border-t border-gray-100">
+                        <select id="pluspayLevel" class="w-full text-[11px] border border-blue-200 rounded-md p-1.5 bg-blue-50 text-blue-800 font-bold focus:outline-none" onchange="searchStore()">
+                            <option value="old" selected>👤 舊戶 (最高18.5%)</option>
+                            <option value="new">🌟 新戶 (最高28.5%)</option>
+                        </select>
+                    </div>`;
+            }
+            return `
+                <div class="flex flex-col bg-white p-2.5 border border-gray-200 rounded-xl shadow-sm hover:border-blue-400 transition-colors w-full">
+                    <label class="flex items-center cursor-pointer w-full">
+                        <input type="checkbox" value="${method}" checked class="w-4 h-4 text-blue-600 rounded mr-2 flex-shrink-0" onchange="searchStore()">
+                        ${formatPaymentNameWithImage(method)}
+                    </label>
+                    ${extraDropdown}
+                </div>`;
         }
 
         function getPromoRule(item) {
@@ -278,7 +325,7 @@
         function searchStore() {
             const val = document.getElementById('storeSearch').value.trim(); 
             const resDiv = document.getElementById('storeResult');
-            const checkedMethods = Array.from(document.querySelectorAll('#cardCheckboxes input:checked')).map(cb => cb.value);
+            const checkedMethods = Array.from(document.querySelectorAll('#garageContainer input:checked')).map(cb => cb.value);
 
             if (!val) { 
                 resDiv.classList.add('hidden'); 
