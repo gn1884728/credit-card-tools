@@ -94,7 +94,7 @@
     </div>
 
     <!-- ======================================================= -->
-    <!-- 多國動態渲染邏輯 JS (含頂級哩程卡視覺 & 覆蓋引擎) -->
+    <!-- 多國動態渲染邏輯 JS (含頂級哩程卡官方真實色調還原) -->
     <!-- ======================================================= -->
     <script>
         let globalDatabase = {}; 
@@ -103,7 +103,7 @@
         let currentCountry = 'TW'; 
         
         // 🔮 系統核心參數設定
-        const MILEAGE_VALUATION = 0.5; // 設定 1哩(飛行基金) = 0.5元台幣 (用此基礎在後台排定高低順序)
+        const MILEAGE_VALUATION = 0.5; 
 
         let fxRates = { TWD: 1, JPY: 4.5, KRW: 42.0, THB: 1.05 }; 
         const countryCurrencyMap = {
@@ -156,7 +156,7 @@
             searchStore();
         }
 
-        // 🎨 信用卡 Logo 尊榮視覺升級引擎
+        // 🎨 信用卡 Logo 尊榮視覺升級引擎 (真實色調版)
         function formatPaymentName(method) {
             let icon = '<i class="fas fa-credit-card text-gray-400 text-sm mr-2 mt-0.5 flex-shrink-0"></i>';
             
@@ -168,10 +168,10 @@
             else if (method.includes('街口支付')) icon = '<span class="bg-[#E4002B] text-white text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">街口</span>';
             else if (method.includes('台新Pay+')) icon = '<span class="bg-[#E60012] text-white text-[10px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">台新Pay+</span>';
             
-            // ✈️ 頂級哩程神卡 (專屬漸層與金屬質感)
-            else if (method.includes('玉山星宇')) icon = '<span class="bg-gradient-to-br from-[#4A3D35] to-[#1A1512] text-[#D4AF37] border border-[#D4AF37] text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0 flex items-center"><i class="fas fa-plane text-[8px] mr-1"></i>星宇</span>';
-            else if (method.includes('星展飛行')) icon = '<span class="bg-gradient-to-br from-gray-800 to-black text-white border border-gray-500 text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0 flex items-center"><span class="text-[#e31837] mr-1">■</span>星展</span>';
-            else if (method.includes('滙豐') || method.includes('旅人')) icon = '<span class="bg-gradient-to-br from-gray-900 to-gray-700 text-white border border-gray-400 text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0 flex items-center"><span class="text-[#db0011] mr-1 font-bold font-serif">HSBC</span>旅人</span>';
+            // ✈️ 頂級哩程神卡 (擷取自官方圖檔真實色碼)
+            else if (method.includes('玉山星宇')) icon = '<span class="bg-[#8E8B82] text-white border border-[#5A5853] text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0 flex items-center"><i class="fas fa-plane text-[8px] mr-1"></i>星宇</span>';
+            else if (method.includes('星展飛行')) icon = '<span class="bg-black text-white border border-gray-600 text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0 flex items-center"><span class="text-white mr-0.5 font-sans font-normal">X</span>星展</span>';
+            else if (method.includes('滙豐') || method.includes('旅人')) icon = '<span class="bg-gradient-to-r from-[#1E2B2A] to-[#3A4A49] text-white border border-[#859897] text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0 flex items-center">HSBC 旅人</span>';
             
             // 一般信用卡
             else if (method.includes('玉山') || method.includes('Unicard')) icon = '<span class="bg-[#009e86] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">玉山</span>';
