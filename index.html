@@ -24,8 +24,8 @@
     
     <div class="w-full max-w-md bg-white rounded-[24px] shadow-lg overflow-hidden mb-8">
         
-        <!-- 🎨 專業級 App 淺藍色 Header 區塊 -->
-        <div class="bg-[#EBF3FF] py-5 px-6 border-b border-blue-100">
+        <!-- 🎨 專業級 App Header 區塊 (已加深為介於中間的藍色 bg-blue-200) -->
+        <div class="bg-blue-200 py-5 px-6 border-b border-blue-300">
             <h2 class="text-[22px] font-black text-center text-gray-900 tracking-wide flex justify-center items-center">
                 <i class="fas fa-credit-card text-blue-600 mr-2 text-2xl"></i>信用卡切換速查
             </h2>
@@ -96,7 +96,7 @@
     </div>
 
     <!-- ======================================================= -->
-    <!-- JS 邏輯區 (含終極防呆重複過濾器) -->
+    <!-- JS 邏輯區 (保留終極過濾防呆與所有功能) -->
     <!-- ======================================================= -->
     <script>
         let globalDatabase = {}; 
@@ -388,7 +388,7 @@
                 searchMatch(val, item.name) && checkedMethods.includes(item.card)
             );
 
-            // 🛡️ 國內外全通路保底機制 (每卡僅限產生一筆)
+            // 🛡️ 國內外全通路通用保底機制
             const hasRichart = checkedMethods.some(m => m.includes('Richart') && !m.includes('台新Pay+'));
             const hasCube = checkedMethods.some(m => m.includes('CUBE'));
             const hasUnicard = checkedMethods.some(m => m.includes('玉山Unicard'));
@@ -428,7 +428,7 @@
                 }
             }
 
-            // 🎯 動態覆蓋引擎：處理等級與生日月變更
+            // 🎯 動態覆蓋引擎
             matchedList = matchedList.filter(m => {
                 if (m.card === '玉山Unicard') {
                     const uConf = unicardConfig[document.getElementById('unicardLevel').value];
@@ -474,14 +474,13 @@
                 return true;
             });
 
-            // 🛑 終極防呆：過濾掉同卡、同方案的重複顯示 (例如雙重輸入導致的重複)
+            // 🛑 終極防呆：過濾同卡、同方案重複顯示
             const uniqueMap = new Map();
             matchedList.forEach(m => {
                 let key = `${m.card}_${m.plan}_${m.rate}`;
                 if (!uniqueMap.has(key)) {
                     uniqueMap.set(key, m);
                 } else {
-                    // 若有重複，保留真實特店名稱，捨棄保底名稱
                     if (!m.isBaseline && uniqueMap.get(key).isBaseline) {
                         uniqueMap.set(key, m);
                     }
@@ -508,7 +507,7 @@
 
                                        let extraNote = rule ? ` ➔ ⚠️ 封頂提醒：${rule.desc}` : '';
                                        let badgeStyle = m.isBaseline ? 'text-indigo-600 bg-indigo-50 border-indigo-100' : 'text-rose-600 bg-rose-50 border-rose-100';
-                                       let badgeText = m.isBaseline ? `🛡️ 通用保底：${m.name}` : `📌 適用：${m.name}`;
+                                       let badgeText = m.isBaseline ? `🛡️ ${m.name}` : `📌 適用：${m.name}`;
 
                                        return `
                                        <div class="mb-3">
