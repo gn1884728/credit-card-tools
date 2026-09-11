@@ -39,7 +39,7 @@
     },
     "玉山Wallet (PayPay)": {
       "綁熊本熊卡": [
-        {"name":"日本 PayPay 特約店 (泛用)","rate":0.05}
+        {"name":"日本 PayPay 特約店 (泛用)","rate":0.05},{"name":"BicCamera","rate":0.05}
       ],
       "日幣外幣帳戶扣款": [
         {"name":"日本 PayPay 特約店 (免1.5%手續費與匯差)","rate":0.0}
@@ -53,36 +53,39 @@
     "星展飛行世界之極卡": {
       "海外消費": [
         {"name":"海外實體消費", "type":"mileage", "ratio":15, "unit":"飛行基金"},
-        {"name":"日本實體消費", "type":"mileage", "ratio":15, "unit":"飛行基金"}
+        {"name":"日本實體消費", "type":"mileage", "ratio":15, "unit":"飛行基金"},
+        {"name":"BicCamera", "type":"mileage", "ratio":15, "unit":"飛行基金"}
       ]
     },
     "玉山星宇世界卡": {
       "海外消費": [
         {"name":"海外實體消費", "type":"mileage", "ratio":10, "unit":"哩"},
         {"name":"日本實體消費", "type":"mileage", "ratio":10, "unit":"哩"},
-        {"name":"生日月國外實體", "type":"mileage", "ratio":5, "unit":"哩"}
+        {"name":"生日月國外實體", "type":"mileage", "ratio":5, "unit":"哩"},
+        {"name":"BicCamera", "type":"mileage", "ratio":10, "unit":"哩"}
       ]
     },
     "滙豐旅人無限卡": {
       "海外消費": [
         {"name":"海外實體消費", "type":"mileage", "ratio":10, "unit":"哩"},
         {"name":"日本實體消費", "type":"mileage", "ratio":10, "unit":"哩"},
-        {"name":"海外線上消費", "type":"mileage", "ratio":10, "unit":"哩"}
+        {"name":"海外線上消費", "type":"mileage", "ratio":10, "unit":"哩"},
+        {"name":"BicCamera", "type":"mileage", "ratio":10, "unit":"哩"}
       ]
     },
     "CUBE卡": {
       "趣旅行": [
-        {"name":"日本實體消費","rate":0.03},{"name":"東京迪士尼樂園","rate":0.03}
+        {"name":"日本實體消費","rate":0.03},{"name":"東京迪士尼樂園","rate":0.03},{"name":"BicCamera","rate":0.03}
       ]
     },
     "台新Richart": {
       "玩旅刷": [
-        {"name":"日本實體消費","rate":0.033}
+        {"name":"日本實體消費","rate":0.033},{"name":"BicCamera","rate":0.033}
       ]
     },
     "玉山Unicard": {
       "UP選": [
-        {"name":"日本實體消費","rate":0.05}
+        {"name":"日本實體消費","rate":0.05},{"name":"BicCamera","rate":0.05}
       ]
     }
   },
