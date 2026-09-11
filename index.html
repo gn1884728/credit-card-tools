@@ -28,6 +28,8 @@
         /* 隱藏捲動條但保留水平捲動功能，提升質感 */
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        /* 美化多行省略 */
+        .text-truncate-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen font-sans flex justify-center items-start pt-10 px-4">
@@ -51,8 +53,8 @@
         <!-- 🗂️ 動態產生：我的支付車庫 -->
         <div class="mb-5 p-4 bg-gray-50 rounded-xl border border-gray-100">
             <label class="block text-gray-700 text-sm font-bold mb-3">請勾選該區可用的支付/信用卡：</label>
-            <!-- 這裡的內容會由 JS 根據國家自動長出來 -->
-            <div class="grid grid-cols-2 gap-3 text-sm text-gray-600" id="cardCheckboxes">
+            <!-- 升級版卡片式勾選區 -->
+            <div class="grid grid-cols-2 gap-2" id="cardCheckboxes">
                 <div class="text-xs text-gray-400">載入中...</div>
             </div>
         </div>
@@ -95,25 +97,23 @@
     </div>
 
     <!-- ======================================================= -->
-    <!-- 多國動態渲染邏輯 JS -->
+    <!-- 多國動態渲染邏輯 JS (含專屬 Logo 生成) -->
     <!-- ======================================================= -->
     <script>
         let globalDatabase = {}; 
         let currentCountryData = []; 
         window.currentBestMatch = null;
-        let currentCountry = 'TW'; // 預設國家
+        let currentCountry = 'TW'; 
         
         // 讀取全新多國資料庫
         fetch('cube_config.json')
             .then(response => response.json())
             .then(data => {
                 globalDatabase = data;
-                // 初始化畫面為台灣
                 renderDynamicUI('TW');
             })
             .catch(error => console.error('無法載入資料庫:', error));
 
-        // 國家提示詞字典
         const countryPlaceholders = {
             'TW': '輸入店名速查 (例如：麥當勞、星巴克)...',
             'JP': '輸入店名速查 (例如：唐吉訶德、BicCamera)...',
@@ -124,46 +124,71 @@
         function setCountry(code, btn) {
             currentCountry = code;
             
-            // 處理頂部按鈕 UI 變更
             document.querySelectorAll('.country-btn').forEach(b => {
                 b.className = 'country-btn flex-shrink-0 bg-white text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-bold shadow-sm hover:bg-gray-50 transition-all';
             });
             btn.className = 'country-btn flex-shrink-0 bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-bold shadow-md transition-all transform scale-105';
             
-            // 更換 Placeholder 提示字
             document.getElementById('storeSearch').placeholder = countryPlaceholders[code];
             document.getElementById('storeSearch').value = '';
             
-            // 動態重新渲染該國適用的卡片與支付選項
             renderDynamicUI(code);
             searchStore();
         }
 
-        // 動態產生勾選按鈕並扁平化該國資料
+        // --- UI 美化：專屬 Logo 生成系統 ---
+        function formatPaymentName(method) {
+            let icon = '<i class="fas fa-credit-card text-gray-400 text-sm mr-2 mt-0.5"></i>';
+            if (method.includes('CUBE')) icon = '<span class="bg-[#00a850] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm">CUBE</span>';
+            else if (method.includes('Richart')) icon = '<span class="bg-[#ff0033] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm">台新</span>';
+            else if (method.includes('玉山') || method.includes('Unicard')) icon = '<span class="bg-[#009e86] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm">玉山</span>';
+            else if (method.includes('PayPay')) icon = '<span class="bg-[#ff0033] text-white text-[9px] px-2 py-0.5 rounded-full font-black italic mr-2 mt-0.5 shadow-sm">PayPay</span>';
+            else if (method.includes('LINE Pay')) icon = '<i class="fab fa-line text-[#06C755] text-lg mr-2 mt-0.5"></i>';
+            else if (method.includes('TrueMoney')) icon = '<span class="bg-[#f26522] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm">True</span>';
+
+            let mainName = method;
+            let subName = '';
+            // 切割出括號內的補充說明作為副標題
+            if (method.includes('(') && method.includes(')')) {
+                let parts = method.split('(');
+                mainName = parts[0].trim();
+                subName = '(' + parts[1];
+            }
+
+            return `
+                <div class="flex items-start w-full">
+                    ${icon}
+                    <div class="flex flex-col flex-1 overflow-hidden">
+                        <span class="font-bold text-[13px] text-gray-800 truncate">${mainName}</span>
+                        ${subName ? `<span class="text-[9px] text-gray-400 font-normal leading-tight text-truncate-2 mt-0.5">${subName}</span>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
         function renderDynamicUI(countryCode) {
             const countryObj = globalDatabase[countryCode] || {};
             const paymentMethods = Object.keys(countryObj);
             
-            // 1. 動態長出勾選框 (預設全勾)
             const checkboxContainer = document.getElementById('cardCheckboxes');
             if (paymentMethods.length > 0) {
+                // 將核取方塊升級為卡片式外觀
                 checkboxContainer.innerHTML = paymentMethods.map(method => `
-                    <label class="flex items-center space-x-2 cursor-pointer">
-                        <input type="checkbox" value="${method}" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" onchange="searchStore()">
-                        <span class="font-bold whitespace-nowrap overflow-hidden text-ellipsis" title="${method}">${method}</span>
+                    <label class="flex items-center cursor-pointer bg-white p-2.5 border border-gray-200 rounded-xl shadow-sm hover:border-blue-400 transition-colors w-full">
+                        <input type="checkbox" value="${method}" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 mr-2 flex-shrink-0" onchange="searchStore()">
+                        ${formatPaymentName(method)}
                     </label>
                 `).join('');
             } else {
-                checkboxContainer.innerHTML = `<div class="text-xs text-rose-500 col-span-2">目前該區尚無資料</div>`;
+                checkboxContainer.innerHTML = `<div class="text-xs text-rose-500 col-span-2 p-3 bg-rose-50 rounded-xl border border-rose-100">目前該區尚無資料</div>`;
             }
 
-            // 2. 扁平化當前國家的資料供搜尋引擎使用
             currentCountryData = [];
             for (const method in countryObj) {
                 for (const plan in countryObj[method]) {
                     countryObj[method][plan].forEach(store => {
                         currentCountryData.push({
-                            card: method, // 現在 card 欄位代表的是「支付方式」或「信用卡」
+                            card: method, 
                             name: store.name,
                             plan: plan,
                             rate: store.rate
@@ -194,7 +219,6 @@
         function searchStore() {
             const val = document.getElementById('storeSearch').value.trim(); 
             const resDiv = document.getElementById('storeResult');
-            // 抓取畫面上目前有被打勾的支付選項
             const checkedMethods = Array.from(document.querySelectorAll('#cardCheckboxes input:checked')).map(cb => cb.value);
 
             if (!val || currentCountryData.length === 0) { 
@@ -203,7 +227,6 @@
                 return; 
             }
 
-            // 在當前國家的資料庫中進行比對
             let matchedList = currentCountryData.filter(item => 
                 searchMatch(val, item.name) && checkedMethods.includes(item.card)
             );
@@ -221,7 +244,7 @@
                                        
                                        return `
                                        <div class="mb-3">
-                                           &bull; <b>[${m.card}]</b> ➔ 建議切換 <b>【${m.plan}】</b> ${rateDisplay}<br>
+                                           &bull; <b>[${m.card.replace(/ \(.+\)/, '')}]</b> ➔ 建議切換 <b>【${m.plan}】</b> ${rateDisplay}<br>
                                            <span class="ml-4 mt-1 inline-block text-xs text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-100">📌 適用：${m.name}${extraNote}</span>
                                        </div>
                                        `;
