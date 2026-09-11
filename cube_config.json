@@ -24,23 +24,40 @@
     }
   },
   "JP": {
-    "PayPay (玉山/街口/全支付)": {
-      "跨境行動支付": [
-        {"name":"日本唐吉訶德", "rate":0.045},
-        {"name":"BicCamera", "rate":0.045},
-        {"name":"日本超商 (7-11/Lawson/FamilyMart)", "rate":0.045}
+    "全盈Pay (PayPay)": {
+      "綁玉山數位/郵局": [
+        {"name":"日本 PayPay 特約店 (新戶)", "rate":0.285},
+        {"name":"日本 PayPay 特約店 (舊戶)", "rate":0.185}
       ]
     },
-    "台新Pay+ (跨境支付)": {
-      "掃碼支付 (PayPay通路)": [
-        {"name":"三越", "rate":0.03},
-        {"name":"伊勢丹", "rate":0.03},
-        {"name":"西武・SOGO", "rate":0.03},
-        {"name":"松本清", "rate":0.03},
-        {"name":"SUNDRUG", "rate":0.03},
-        {"name":"鶴羽藥妝", "rate":0.03},
-        {"name":"BicCamera", "rate":0.03},
-        {"name":"愛電王 EDION", "rate":0.03}
+    "全支付 (PayPay)": {
+      "綁國泰/將來帳戶": [
+        {"name":"日本 PayPay 特約店", "rate":0.15}
+      ]
+    },
+    "iPass Money (PayPay)": {
+      "帳戶餘額扣款": [
+        {"name":"日本 PayPay 特約店", "rate":0.15}
+      ]
+    },
+    "玉山Wallet (PayPay)": {
+      "綁熊本熊卡": [
+        {"name":"日本 PayPay 特約店", "rate":0.05}
+      ],
+      "日幣帳戶直接扣款": [
+        {"name":"日本 PayPay 特約店 (免匯差)", "rate":0.00}
+      ]
+    },
+    "街口支付 (PayPay)": {
+      "綁街口卡/街利存": [
+        {"name":"日本 PayPay 特約店", "rate":0.02}
+      ]
+    },
+    "台新Pay+ (PayPay)": {
+      "綁 Richart 卡": [
+        {"name":"日本 PayPay 特約店 (無上限)", "rate":0.038},
+        {"name":"BicCamera", "rate":0.038},
+        {"name":"松本清 / 鶴羽藥妝", "rate":0.038}
       ]
     },
     "CUBE卡": {
@@ -48,15 +65,6 @@
         {"name":"日本實體消費", "rate":0.03},
         {"name":"東京迪士尼樂園", "rate":0.03},
         {"name":"大阪環球影城(USJ)", "rate":0.03}
-      ],
-      "童樂匯": [
-        {"name":"東京迪士尼樂園", "rate":0.05},
-        {"name":"大阪環球影城", "rate":0.05}
-      ]
-    },
-    "玉山Unicard": {
-      "UP選": [
-        {"name":"日本實體消費", "rate":0.05}
       ]
     }
   },
@@ -68,7 +76,7 @@
         {"name":"樂天免稅店", "rate":0.03}
       ]
     },
-    "台新Pay+ (跨境支付)": {
+    "台新Pay+ (跨境韓國)": {
       "掃碼支付": [
         {"name":"韓國特約店家", "rate":0.03}
       ]
