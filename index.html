@@ -4,13 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>信用卡切換速查 | 瘋哥的3c盒子</title>
-    
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="icon.png.png">
     <link rel="icon" type="image/png" href="icon.png.png">
-
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -18,8 +16,6 @@
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         .text-truncate-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        
-        /* 圖片載入失敗時的預設隱藏樣式 */
         img.fallback-icon { display: none; }
         img.loaded { display: block; width: 36px; height: 24px; object-fit: cover; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); margin-right: 8px; margin-top: 2px; flex-shrink: 0; }
     </style>
@@ -32,7 +28,6 @@
             <i class="fas fa-credit-card text-blue-600 mr-2"></i>信用卡切換速查
         </h2>
 
-        <!-- 🌍 多國切換列 -->
         <div class="mb-5">
             <div class="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide" id="countrySelector">
                 <button onclick="setCountry('TW', this)" class="country-btn flex-shrink-0 bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-bold shadow-md transition-all transform scale-105">🇹🇼 台灣</button>
@@ -42,12 +37,10 @@
             </div>
         </div>
 
-        <!-- 🗂️ 動態產生：我的支付車庫 (三大分類新架構) -->
         <div class="mb-6" id="garageContainer">
             <div class="text-center text-xs text-gray-400 py-4">載入支付車庫中...</div>
         </div>
 
-        <!-- 🔍 搜尋店名 -->
         <div class="mb-5 relative">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <i class="fas fa-search text-gray-400"></i>
@@ -55,10 +48,8 @@
             <input type="text" id="storeSearch" oninput="searchStore()" placeholder="輸入店名速查..." class="w-full pl-9 pr-4 py-3 border border-gray-100 rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 font-bold shadow-sm transition-colors">
         </div>
         
-        <!-- 搜尋結果顯示區 -->
         <div id="storeResult" class="p-4 bg-blue-50 rounded-xl mb-5 text-sm font-bold text-blue-800 hidden border border-blue-100"></div>
         
-        <!-- 💰 消費金額與回饋率 -->
         <div class="grid grid-cols-2 gap-4 mb-6">
             <div>
                 <label class="block text-blue-800 text-xs mb-2 font-bold" id="amtLabel">消費金額 (台幣 TWD)</label>
@@ -71,9 +62,20 @@
             </div>
         </div>
         
-        <!-- 🌟 試算結果 -->
         <div id="pointResult" class="text-center text-xl font-bold text-rose-600 py-4 bg-rose-50 rounded-xl mb-6 border border-rose-100 tracking-wide flex flex-col justify-center items-center min-h-[80px]">
             預估回饋：0
+        </div>
+
+        <div class="border-t border-gray-100 pt-5 mt-2">
+            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-100 flex items-center justify-between">
+                <div>
+                    <h4 class="text-sm font-bold text-blue-800 mb-1">查無特店？歡迎回報 🚀</h4>
+                    <p class="text-xs text-gray-500 font-bold">提供截圖，擴大資料庫</p>
+                </div>
+                <a href="https://forms.gle/xLTZqzGPGXib2zYj6" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 px-4 rounded-lg shadow transition-colors whitespace-nowrap">
+                    提供截圖
+                </a>
+            </div>
         </div>
 
         <div class="text-center mt-6">
@@ -81,9 +83,6 @@
         </div>
     </div>
 
-    <!-- ======================================================= -->
-    <!-- JS 邏輯區 (含分類引擎與真實圖片載入機制) -->
-    <!-- ======================================================= -->
     <script>
         let globalDatabase = {}; 
         let currentCountryData = []; 
@@ -91,7 +90,6 @@
         let currentCountry = 'TW'; 
         
         const MILEAGE_VALUATION = 0.5; 
-
         let fxRates = { TWD: 1, JPY: 4.5, KRW: 42.0, THB: 1.05 }; 
         const countryCurrencyMap = {
             'TW': { code: 'TWD', name: '台幣' },
@@ -109,6 +107,19 @@
             'simple': { name: '簡單選', base: 0.01, bonus: 0.02, capAmt: 50000, desc: "最高刷5萬拿滿2%加碼" },
             'any': { name: '任意選', base: 0.01, bonus: 0.025, capAmt: 40000, desc: "最高刷4萬拿滿2.5%加碼" },
             'up': { name: 'UP選', base: 0.01, bonus: 0.035, capAmt: 142857, desc: "最高刷14.2萬拿滿3.5%加碼" }
+        };
+
+        // ✈️ 哩程卡動態設定表
+        const hsbcConfig = {
+            'infinite': { name: '旅人無限卡', tw: 18, overseas: 10 },
+            'signature': { name: '旅人御璽卡', tw: 18, overseas: 15 },
+            'light': { name: '旅人輕旅卡', tw: 20, overseas: 20 }
+        };
+
+        const starluxConfig = {
+            'world': { name: '世界卡', tw: 20, overseas: 10, birthdayOverseas: 5 },
+            'business': { name: '商務鈦金卡', tw: 25, overseas: 15, birthdayOverseas: 10 },
+            'titanium': { name: '鈦金卡', tw: 28, overseas: 20, birthdayOverseas: null } // 鈦金無生日加碼
         };
 
         fetch('cube_config.json')
@@ -143,12 +154,10 @@
             searchStore();
         }
 
-        // 🎨 真實照片載入引擎 + CSS備案
         function formatPaymentNameWithImage(method) {
             let imgFileName = null;
             let cssFallback = '<i class="fas fa-credit-card text-gray-400 text-sm mr-2 mt-0.5 flex-shrink-0" id="fallback-'+method+'"></i>';
 
-            // 1. 圖片對應表 (您可以隨時把真實圖檔放入 images 資料夾)
             if (method.includes('玉山星宇')) imgFileName = 'starlux.png';
             else if (method.includes('星展飛行')) imgFileName = 'dbs.png';
             else if (method.includes('滙豐') || method.includes('旅人')) imgFileName = 'hsbc.png';
@@ -156,7 +165,6 @@
             else if (method.includes('玉山Unicard')) imgFileName = 'unicard.png';
             else if (method.includes('PayPay')) imgFileName = 'paypay.png';
             
-            // 2. 如果沒有圖片，或是圖片載入失敗，就顯示 CSS 備案
             if (method.includes('PayPay')) cssFallback = '<span class="bg-[#FF0032] text-white text-[14px] w-[24px] h-[24px] flex items-center justify-center rounded-[6px] font-black italic mr-2 shadow-sm flex-shrink-0">P</span>';
             else if (method.includes('全盈Pay')) cssFallback = '<span class="bg-[#00B1EB] text-white text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">全盈</span>';
             else if (method.includes('全支付')) cssFallback = '<span class="bg-[#FF6B00] text-white text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">全支付</span>';
@@ -179,7 +187,6 @@
                 subName = '(' + parts[1];
             }
 
-            // 若有對應圖片，嘗試載入；若失敗則顯示 cssFallback
             let imgTag = imgFileName 
                 ? `<img src="images/${imgFileName}" class="fallback-icon" onload="this.className='loaded'; this.nextElementSibling.style.display='none';" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">`
                 : '';
@@ -196,6 +203,73 @@
             `;
         }
 
+        // 🌟 處理星宇卡生日選單的顯示與隱藏
+        window.toggleStarluxBirthday = function() {
+            const level = document.getElementById('starluxLevel').value;
+            const bdayDiv = document.getElementById('starluxBirthdayDiv');
+            const bdayCheck = document.getElementById('starluxBirthdayCheck');
+            
+            if (level === 'titanium') {
+                bdayDiv.classList.add('hidden');
+                bdayCheck.checked = false; // 鈦金卡強制作廢生日選項
+            } else {
+                bdayDiv.classList.remove('hidden');
+            }
+            searchStore();
+        };
+
+        function buildCheckboxBlock(method) {
+            let extraDropdown = '';
+            if (method.includes('玉山Unicard')) {
+                extraDropdown = `
+                    <div class="mt-2.5 pt-2.5 border-t border-gray-100">
+                        <select id="unicardLevel" class="w-full text-[11px] border border-emerald-200 rounded-md p-1.5 bg-emerald-50 text-emerald-800 font-bold focus:outline-none" onchange="searchStore()">
+                            <option value="up" selected>🏆 UP選 (最高4.5%)</option>
+                            <option value="any">🎯 任意選 (最高3.5%)</option>
+                            <option value="simple">🔰 簡單選 (最高3%)</option>
+                        </select>
+                    </div>`;
+            } else if (method.includes('全盈Pay')) {
+                extraDropdown = `
+                    <div class="mt-2.5 pt-2.5 border-t border-gray-100">
+                        <select id="pluspayLevel" class="w-full text-[11px] border border-blue-200 rounded-md p-1.5 bg-blue-50 text-blue-800 font-bold focus:outline-none" onchange="searchStore()">
+                            <option value="old" selected>👤 舊戶 (最高18.5%)</option>
+                            <option value="new">🌟 新戶 (最高28.5%)</option>
+                        </select>
+                    </div>`;
+            } else if (method.includes('滙豐') || method.includes('旅人')) {
+                extraDropdown = `
+                    <div class="mt-2.5 pt-2.5 border-t border-gray-100">
+                        <select id="hsbcLevel" class="w-full text-[11px] border border-gray-300 rounded-md p-1.5 bg-gray-50 text-gray-800 font-bold focus:outline-none" onchange="searchStore()">
+                            <option value="infinite" selected>💳 旅人無限卡</option>
+                            <option value="signature">💳 旅人御璽卡</option>
+                            <option value="light">💳 旅人輕旅卡</option>
+                        </select>
+                    </div>`;
+            } else if (method.includes('玉山星宇')) {
+                extraDropdown = `
+                    <div class="mt-2.5 pt-2.5 border-t border-gray-100">
+                        <select id="starluxLevel" class="w-full text-[11px] border border-yellow-200 rounded-md p-1.5 bg-yellow-50 text-yellow-800 font-bold focus:outline-none mb-2" onchange="toggleStarluxBirthday()">
+                            <option value="world" selected>✈️ 世界卡</option>
+                            <option value="business">✈️ 商務鈦金卡</option>
+                            <option value="titanium">✈️ 鈦金卡</option>
+                        </select>
+                        <div id="starluxBirthdayDiv" class="flex items-center mt-1 ml-1 ${currentCountry === 'TW' ? 'hidden' : ''}">
+                            <input type="checkbox" id="starluxBirthdayCheck" class="w-3 h-3 text-yellow-600 rounded border-gray-300 focus:ring-yellow-500 mr-1.5" onchange="searchStore()">
+                            <label for="starluxBirthdayCheck" class="text-[10px] text-gray-500 font-bold cursor-pointer">🎂 剛好是生日月</label>
+                        </div>
+                    </div>`;
+            }
+            return `
+                <div class="flex flex-col bg-white p-2.5 border border-gray-200 rounded-xl shadow-sm hover:border-blue-400 transition-colors w-full">
+                    <label class="flex items-center cursor-pointer w-full">
+                        <input type="checkbox" value="${method}" checked class="w-4 h-4 text-blue-600 rounded mr-2 flex-shrink-0" onchange="searchStore()">
+                        ${formatPaymentNameWithImage(method)}
+                    </label>
+                    ${extraDropdown}
+                </div>`;
+        }
+
         function renderDynamicUI(countryCode) {
             const countryObj = globalDatabase[countryCode] || {};
             const paymentMethods = Object.keys(countryObj);
@@ -206,36 +280,26 @@
                 return;
             }
 
-            // 🎯 三大陣營分類邏輯
             let categories = {
                 mobile: { title: '📱 行動支付', items: [], color: 'bg-blue-50 border-blue-100 text-blue-800' },
                 mileage: { title: '✈️ 航空哩程卡', items: [], color: 'bg-slate-100 border-slate-200 text-slate-800' },
                 cashback: { title: '💰 點數 / 現金回饋', items: [], color: 'bg-emerald-50 border-emerald-100 text-emerald-800' }
             };
 
-            // 分派卡片到對應陣營
             paymentMethods.forEach(method => {
                 let htmlBlock = buildCheckboxBlock(method);
-                
                 let isMileage = false;
-                // 檢查是否為哩程卡 (掃描內部 plan)
                 for (const plan in countryObj[method]) {
                     if (countryObj[method][plan].some(store => store.type === 'mileage')) {
                         isMileage = true;
                         break;
                     }
                 }
-
-                if (isMileage) {
-                    categories.mileage.items.push(htmlBlock);
-                } else if (/Pay|支付|Wallet|iPass|街口|TrueMoney/i.test(method)) {
-                    categories.mobile.items.push(htmlBlock);
-                } else {
-                    categories.cashback.items.push(htmlBlock);
-                }
+                if (isMileage) categories.mileage.items.push(htmlBlock);
+                else if (/Pay|支付|Wallet|iPass|街口|TrueMoney/i.test(method)) categories.mobile.items.push(htmlBlock);
+                else categories.cashback.items.push(htmlBlock);
             });
 
-            // 渲染分類區塊
             let finalHtml = '';
             for (let catKey in categories) {
                 let cat = categories[catKey];
@@ -254,7 +318,14 @@
             }
             container.innerHTML = finalHtml;
 
-            // 扁平化資料供搜尋使用
+            // 確保切換國家時星宇生日選項的顯示狀態正確 (僅限海外顯示)
+            const bdayDiv = document.getElementById('starluxBirthdayDiv');
+            if (bdayDiv) {
+                const sLevel = document.getElementById('starluxLevel').value;
+                if (countryCode === 'TW' || sLevel === 'titanium') bdayDiv.classList.add('hidden');
+                else bdayDiv.classList.remove('hidden');
+            }
+
             currentCountryData = [];
             for (const method in countryObj) {
                 for (const plan in countryObj[method]) {
@@ -275,42 +346,10 @@
             }
         }
 
-        // 獨立組裝核取方塊與下拉選單
-        function buildCheckboxBlock(method) {
-            let extraDropdown = '';
-            if (method.includes('玉山Unicard')) {
-                extraDropdown = `
-                    <div class="mt-2.5 pt-2.5 border-t border-gray-100">
-                        <select id="unicardLevel" class="w-full text-[11px] border border-emerald-200 rounded-md p-1.5 bg-emerald-50 text-emerald-800 font-bold focus:outline-none" onchange="searchStore()">
-                            <option value="up" selected>🏆 UP選 (最高4.5%)</option>
-                            <option value="any">🎯 任意選 (最高3.5%)</option>
-                            <option value="simple">🔰 簡單選 (最高3%)</option>
-                        </select>
-                    </div>`;
-            } else if (method.includes('全盈Pay')) {
-                extraDropdown = `
-                    <div class="mt-2.5 pt-2.5 border-t border-gray-100">
-                        <select id="pluspayLevel" class="w-full text-[11px] border border-blue-200 rounded-md p-1.5 bg-blue-50 text-blue-800 font-bold focus:outline-none" onchange="searchStore()">
-                            <option value="old" selected>👤 舊戶 (最高18.5%)</option>
-                            <option value="new">🌟 新戶 (最高28.5%)</option>
-                        </select>
-                    </div>`;
-            }
-            return `
-                <div class="flex flex-col bg-white p-2.5 border border-gray-200 rounded-xl shadow-sm hover:border-blue-400 transition-colors w-full">
-                    <label class="flex items-center cursor-pointer w-full">
-                        <input type="checkbox" value="${method}" checked class="w-4 h-4 text-blue-600 rounded mr-2 flex-shrink-0" onchange="searchStore()">
-                        ${formatPaymentNameWithImage(method)}
-                    </label>
-                    ${extraDropdown}
-                </div>`;
-        }
-
         function getPromoRule(item) {
             if (!item) return null;
             if (item.name.includes('麥當勞APP點餐')) return { base: 0.03, bonus: 0.075, capAmt: 1066, desc: "最高刷 $1,066 拿滿 7.5% 額外加碼" };
             if (item.name.includes('星巴克儲值')) return { base: 0.03, bonus: 0.02, capAmt: 5000, desc: "最高刷 $5,000 拿滿 2% 額外加碼" };
-            
             if (item.card === '玉山Unicard') {
                 const uLevel = document.getElementById('unicardLevel') ? document.getElementById('unicardLevel').value : 'up';
                 return unicardConfig[uLevel];
@@ -363,7 +402,6 @@
                 }
                 if (hasStarlux && !matchedList.some(m => m.card.includes('星宇') && m.isBaseline)) {
                     matchedList.push({ card: "玉山星宇世界卡", name: `${val} (海外實體通用)`, plan: "海外消費", type: 'mileage', ratio: 10, unit: '哩', rate: MILEAGE_VALUATION/10, isBaseline: true });
-                    matchedList.push({ card: "玉山星宇世界卡", name: `${val} (生日月海外實體)`, plan: "專屬加碼", type: 'mileage', ratio: 5, unit: '哩', rate: MILEAGE_VALUATION/5, isBaseline: true });
                 }
                 if (hasDbs && !matchedList.some(m => m.card.includes('星展') && m.isBaseline)) {
                     matchedList.push({ card: "星展飛行世界之極卡", name: `${val} (海外實體通用)`, plan: "海外消費", type: 'mileage', ratio: 15, unit: '飛行基金', rate: MILEAGE_VALUATION/15, isBaseline: true });
@@ -380,17 +418,54 @@
                 }
             }
 
-            matchedList.forEach(m => {
+            // 🎯 動態覆蓋引擎：處理等級與生日月變更
+            matchedList = matchedList.filter(m => {
                 if (m.card === '玉山Unicard') {
-                    const uConf = unicardConfig[document.getElementById('unicardLevel') ? document.getElementById('unicardLevel').value : 'up'];
+                    const uConf = unicardConfig[document.getElementById('unicardLevel').value];
                     m.rate = uConf.base + uConf.bonus; 
                     m.plan = uConf.name; 
                 } 
                 else if (m.card.includes('全盈Pay')) {
-                    const pLevel = document.getElementById('pluspayLevel') ? document.getElementById('pluspayLevel').value : 'old';
+                    const pLevel = document.getElementById('pluspayLevel').value;
                     m.rate = pLevel === 'old' ? 0.185 : 0.285;
                     m.plan = pLevel === 'old' ? "綁玉山數位/郵局 (舊戶)" : "綁玉山數位/郵局 (限新戶)";
                 }
+                else if (m.card.includes('滙豐')) {
+                    const hLevel = document.getElementById('hsbcLevel').value;
+                    const hConf = hsbcConfig[hLevel];
+                    m.card = hConf.name;
+                    m.ratio = currentCountry === 'TW' ? hConf.tw : hConf.overseas;
+                    m.rate = MILEAGE_VALUATION / m.ratio;
+                }
+                else if (m.card.includes('星宇')) {
+                    const sLevel = document.getElementById('starluxLevel').value;
+                    const sConf = starluxConfig[sLevel];
+                    const isBday = document.getElementById('starluxBirthdayCheck') ? document.getElementById('starluxBirthdayCheck').checked : false;
+                    
+                    m.card = "玉山星宇" + sConf.name;
+                    
+                    if (currentCountry === 'TW') {
+                        // 國內不套用生日加碼
+                        if (m.name.includes('生日月')) return false; 
+                        m.ratio = sConf.tw;
+                        m.plan = "國內消費";
+                    } else {
+                        // 海外邏輯
+                        if (isBday && sConf.birthdayOverseas !== null) {
+                            // 若勾選生日，且該卡別有生日優惠 (排除鈦金)
+                            m.ratio = sConf.birthdayOverseas;
+                            m.plan = "🎂 生日月專屬加碼";
+                            m.name = m.name.replace('(海外實體通用)', '(海外實體生日)');
+                        } else {
+                            // 未勾選生日，或鈦金卡
+                            if (m.name.includes('生日月')) return false; // 隱藏原本 JSON 裡的生日選項，避免重複
+                            m.ratio = sConf.overseas;
+                            m.plan = "海外消費";
+                        }
+                    }
+                    m.rate = MILEAGE_VALUATION / m.ratio;
+                }
+                return true;
             });
 
             matchedList.sort((a, b) => b.rate - a.rate);
