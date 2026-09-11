@@ -5,22 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>信用卡切換速查 | 瘋哥的3c盒子</title>
     
-    <!-- SEO 與社群分享標籤 -->
-    <meta name="description" content="結帳總是忘記切換信用卡方案？瘋哥自製「信用卡權益決策神器」，免下載 App，一秒查詢最新通路回饋與最優推薦卡別。">
-    <meta property="og:title" content="信用卡切換速查 | 瘋哥專屬工具">
-    <meta property="og:description" content="結帳前一秒查完！精準切換方案，告訴你刷哪張卡最賺。">
-    <meta property="og:image" content="https://card.fongarea.com/icon.png.png">
-    <meta property="og:type" content="website">
-
-    <!-- 📱 安卓 / iOS PWA 身分證與桌面圖示 -->
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="mobile-web-app-capable" content="yes">
     <link rel="apple-touch-icon" href="icon.png.png">
     <link rel="icon" type="image/png" href="icon.png.png">
 
-    <!-- 🎨 樣式與圖示庫 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -61,7 +51,7 @@
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <i class="fas fa-search text-gray-400"></i>
             </div>
-            <input type="text" id="storeSearch" oninput="searchStore()" placeholder="輸入店名速查 (例如：麥當勞、星巴克)..." class="w-full pl-9 pr-4 py-3 border border-gray-100 rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 font-bold shadow-sm transition-colors">
+            <input type="text" id="storeSearch" oninput="searchStore()" placeholder="輸入店名速查..." class="w-full pl-9 pr-4 py-3 border border-gray-100 rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 font-bold shadow-sm transition-colors">
         </div>
         
         <!-- 搜尋結果顯示區 -->
@@ -70,15 +60,13 @@
         <!-- 💰 消費金額與回饋率 -->
         <div class="grid grid-cols-2 gap-4 mb-6">
             <div>
-                <!-- 標題會依據國家動態改變 -->
                 <label class="block text-blue-800 text-xs mb-2 font-bold" id="amtLabel">消費金額 (台幣 TWD)</label>
                 <input type="number" id="consumeAmt" placeholder="輸入當地金額" class="w-full p-3 border border-gray-100 rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 font-bold shadow-sm" oninput="calcPoints()">
-                <!-- 即時匯率換算顯示區塊 -->
                 <div id="twdEstimate" class="mt-1.5 text-[10px] text-gray-500 font-bold hidden bg-blue-50 p-1.5 rounded-lg border border-blue-100 tracking-wide text-center"></div>
             </div>
             <div>
-                <label class="block text-gray-500 text-xs mb-2 font-bold">最優回饋率 (%)</label>
-                <input type="text" id="consumeRate" placeholder="例如: 3" class="w-full p-3 border border-gray-100 rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 font-bold shadow-sm" oninput="calcPoints()">
+                <label class="block text-gray-500 text-xs mb-2 font-bold">最優回饋率 / 哩程比</label>
+                <input type="text" id="consumeRate" readonly placeholder="例如: 3%" class="w-full p-3 border border-gray-100 rounded-xl bg-gray-50 text-sm focus:outline-none text-gray-700 font-bold shadow-sm">
             </div>
         </div>
         
@@ -87,16 +75,26 @@
             預估回饋：0
         </div>
 
-        <!-- 反向連結 -->
+        <!-- 🚀 查無特店回報區塊 -->
+        <div class="border-t border-gray-100 pt-5 mt-2">
+            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-100 flex items-center justify-between">
+                <div>
+                    <h4 class="text-sm font-bold text-blue-800 mb-1">查無特店？歡迎回報 🚀</h4>
+                    <p class="text-xs text-gray-500 font-bold">提供截圖，擴大資料庫</p>
+                </div>
+                <a href="https://forms.gle/xLTZqzGPGXib2zYj6" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 px-4 rounded-lg shadow transition-colors whitespace-nowrap">
+                    提供截圖
+                </a>
+            </div>
+        </div>
+
         <div class="text-center mt-6">
-            <a href="https://fongarea.com" target="_blank" class="text-xs text-gray-400 hover:text-blue-500 font-bold transition-colors">
-                &copy; 2026 瘋哥的3c盒子
-            </a>
+            <a href="https://fongarea.com" target="_blank" class="text-xs text-gray-400 hover:text-blue-500 font-bold transition-colors">&copy; 2026 瘋哥的3c盒子</a>
         </div>
     </div>
 
     <!-- ======================================================= -->
-    <!-- 多國動態渲染邏輯 JS (含覆蓋引擎 & 即時匯率換算) -->
+    <!-- 多國動態渲染邏輯 JS (含頂級哩程卡視覺 & 覆蓋引擎) -->
     <!-- ======================================================= -->
     <script>
         let globalDatabase = {}; 
@@ -104,8 +102,10 @@
         window.currentBestMatch = null;
         let currentCountry = 'TW'; 
         
-        // 💱 匯率與幣別引擎
-        let fxRates = { TWD: 1, JPY: 4.5, KRW: 42.0, THB: 1.05 }; // 備用基礎匯率
+        // 🔮 系統核心參數設定
+        const MILEAGE_VALUATION = 0.5; // 設定 1哩(飛行基金) = 0.5元台幣 (用此基礎在後台排定高低順序)
+
+        let fxRates = { TWD: 1, JPY: 4.5, KRW: 42.0, THB: 1.05 }; 
         const countryCurrencyMap = {
             'TW': { code: 'TWD', name: '台幣' },
             'JP': { code: 'JPY', name: '日圓' },
@@ -113,80 +113,76 @@
             'TH': { code: 'THB', name: '泰銖' }
         };
 
-        // 載入時自動抓取最新匯率 (以台幣為基準)
         fetch('https://api.exchangerate-api.com/v4/latest/TWD')
             .then(response => response.json())
-            .then(data => {
-                if (data && data.rates) {
-                    fxRates = data.rates;
-                    console.log("即時匯率載入成功:", fxRates);
-                }
-            })
-            .catch(error => console.error("匯率載入失敗，使用備用匯率", error));
+            .then(data => { if (data && data.rates) fxRates = data.rates; })
+            .catch(error => console.error("匯率載入失敗", error));
         
-        // 🔮 玉山 Unicard 專屬三層級規則庫
         const unicardConfig = {
-            'simple': { name: '簡單選', base: 0.01, bonus: 0.02, capAmt: 50000, desc: "最高刷5萬拿滿2%加碼 (基本1%無上限)" },
-            'any': { name: '任意選', base: 0.01, bonus: 0.025, capAmt: 40000, desc: "⚠️須APP自選特店！最高刷4萬拿滿2.5%加碼" },
-            'up': { name: 'UP選', base: 0.01, bonus: 0.035, capAmt: 142857, desc: "最高刷14.2萬拿滿3.5%加碼 (基本1%無上限)" }
+            'simple': { name: '簡單選', base: 0.01, bonus: 0.02, capAmt: 50000, desc: "最高刷5萬拿滿2%加碼" },
+            'any': { name: '任意選', base: 0.01, bonus: 0.025, capAmt: 40000, desc: "最高刷4萬拿滿2.5%加碼" },
+            'up': { name: 'UP選', base: 0.01, bonus: 0.035, capAmt: 142857, desc: "最高刷14.2萬拿滿3.5%加碼" }
         };
 
         fetch('cube_config.json')
             .then(response => response.json())
-            .then(data => {
-                globalDatabase = data;
-                renderDynamicUI('TW');
-            })
+            .then(data => { globalDatabase = data; renderDynamicUI('TW'); })
             .catch(error => console.error('無法載入資料庫:', error));
 
         const countryPlaceholders = {
             'TW': '輸入店名速查 (例如：麥當勞、星巴克)...',
-            'JP': '輸入店名速查 (例如：松本清、唐吉訶德、BicCamera)...',
-            'KR': '輸入店名速查 (例如：樂天免稅店、Olive Young)...',
-            'TH': '輸入店名速查 (例如：泰國 7-11、Grab)...'
+            'JP': '輸入店名速查 (例如：松本清、唐吉訶德)...',
+            'KR': '輸入店名速查 (例如：樂天免稅店)...',
+            'TH': '輸入店名速查 (例如：泰國 7-11)...'
         };
 
         function setCountry(code, btn) {
             currentCountry = code;
-            
-            // 變更按鈕外觀
             document.querySelectorAll('.country-btn').forEach(b => {
                 b.className = 'country-btn flex-shrink-0 bg-white text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-bold shadow-sm hover:bg-gray-50 transition-all';
             });
             btn.className = 'country-btn flex-shrink-0 bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-bold shadow-md transition-all transform scale-105';
             
-            // 變更店鋪 Placeholder
             document.getElementById('storeSearch').placeholder = countryPlaceholders[code];
             document.getElementById('storeSearch').value = '';
             
-            // 💱 變更消費金額的幣別標籤並清空數值
             let curr = countryCurrencyMap[code];
             document.getElementById('amtLabel').innerText = `消費金額 (${curr.name} ${curr.code})`;
             document.getElementById('consumeAmt').value = '';
-            document.getElementById('twdEstimate').classList.add('hidden'); // 切換國家時隱藏匯率提示
+            document.getElementById('twdEstimate').classList.add('hidden');
             document.getElementById('pointResult').innerHTML = `預估回饋：0`;
             
             renderDynamicUI(code);
             searchStore();
         }
 
+        // 🎨 信用卡 Logo 尊榮視覺升級引擎
         function formatPaymentName(method) {
             let icon = '<i class="fas fa-credit-card text-gray-400 text-sm mr-2 mt-0.5 flex-shrink-0"></i>';
             
+            // 行動支付
             if (method.includes('PayPay')) icon = '<span class="bg-[#FF0032] text-white text-[14px] w-[24px] h-[24px] flex items-center justify-center rounded-[6px] font-black italic mr-2 shadow-sm flex-shrink-0" style="font-family: Arial, sans-serif; padding-right: 2px;">P</span>';
             else if (method.includes('全盈Pay')) icon = '<span class="bg-[#00B1EB] text-white text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">全盈</span>';
             else if (method.includes('全支付')) icon = '<span class="bg-[#FF6B00] text-white text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">全支付</span>';
             else if (method.includes('iPass Money')) icon = '<span class="bg-[#008985] text-white text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">iPass</span>';
             else if (method.includes('街口支付')) icon = '<span class="bg-[#E4002B] text-white text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">街口</span>';
             else if (method.includes('台新Pay+')) icon = '<span class="bg-[#E60012] text-white text-[10px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">台新Pay+</span>';
-            else if (method.includes('玉山Wallet') || method.includes('玉山Unicard')) icon = '<span class="bg-[#009e86] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">玉山</span>';
+            
+            // ✈️ 頂級哩程神卡 (專屬漸層與金屬質感)
+            else if (method.includes('玉山星宇')) icon = '<span class="bg-gradient-to-br from-[#4A3D35] to-[#1A1512] text-[#D4AF37] border border-[#D4AF37] text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0 flex items-center"><i class="fas fa-plane text-[8px] mr-1"></i>星宇</span>';
+            else if (method.includes('星展飛行')) icon = '<span class="bg-gradient-to-br from-gray-800 to-black text-white border border-gray-500 text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0 flex items-center"><span class="text-[#e31837] mr-1">■</span>星展</span>';
+            else if (method.includes('滙豐') || method.includes('旅人')) icon = '<span class="bg-gradient-to-br from-gray-900 to-gray-700 text-white border border-gray-400 text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0 flex items-center"><span class="text-[#db0011] mr-1 font-bold font-serif">HSBC</span>旅人</span>';
+            
+            // 一般信用卡
+            else if (method.includes('玉山') || method.includes('Unicard')) icon = '<span class="bg-[#009e86] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">玉山</span>';
             else if (method.includes('CUBE')) icon = '<span class="bg-[#00a850] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">CUBE</span>';
             else if (method.includes('Richart')) icon = '<span class="bg-[#ff0033] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">台新</span>';
+            
+            // 海外當地支付
             else if (method.includes('LINE Pay')) icon = '<i class="fab fa-line text-[#06C755] text-lg mr-2 mt-0.5 flex-shrink-0"></i>';
             else if (method.includes('TrueMoney')) icon = '<span class="bg-[#f26522] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">True</span>';
 
-            let mainName = method;
-            let subName = '';
+            let mainName = method, subName = '';
             if (method.includes('(') && method.includes(')')) {
                 let parts = method.split('(');
                 mainName = parts[0].trim();
@@ -207,45 +203,37 @@
         function renderDynamicUI(countryCode) {
             const countryObj = globalDatabase[countryCode] || {};
             const paymentMethods = Object.keys(countryObj);
-            
             const checkboxContainer = document.getElementById('cardCheckboxes');
+            
             if (paymentMethods.length > 0) {
                 checkboxContainer.innerHTML = paymentMethods.map(method => {
                     let extraDropdown = '';
-                    
                     if (method.includes('玉山Unicard')) {
                         extraDropdown = `
                             <div class="mt-2.5 pt-2.5 border-t border-gray-100">
-                                <label class="text-[10px] text-gray-400 font-bold mb-1 block">我的 Unicard 權益等級：</label>
-                                <select id="unicardLevel" class="w-full text-xs border border-emerald-200 rounded-lg p-2 bg-emerald-50 text-emerald-800 font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500 shadow-sm" onchange="searchStore()">
-                                    <option value="up" selected>🏆 UP選 (最高 4.5% / 上限14.2萬)</option>
-                                    <option value="any">🎯 任意選 (最高 3.5% / 上限4萬)</option>
-                                    <option value="simple">🔰 簡單選 (最高 3% / 上限5萬)</option>
+                                <select id="unicardLevel" class="w-full text-xs border border-emerald-200 rounded-lg p-2 bg-emerald-50 text-emerald-800 font-bold" onchange="searchStore()">
+                                    <option value="up" selected>🏆 UP選 (最高 4.5%)</option>
+                                    <option value="any">🎯 任意選 (最高 3.5%)</option>
+                                    <option value="simple">🔰 簡單選 (最高 3%)</option>
                                 </select>
-                            </div>
-                        `;
-                    } 
-                    else if (method.includes('全盈Pay')) {
+                            </div>`;
+                    } else if (method.includes('全盈Pay')) {
                         extraDropdown = `
                             <div class="mt-2.5 pt-2.5 border-t border-gray-100">
-                                <label class="text-[10px] text-gray-400 font-bold mb-1 block">全盈Pay 帳戶資格：</label>
-                                <select id="pluspayLevel" class="w-full text-xs border border-blue-200 rounded-lg p-2 bg-blue-50 text-blue-800 font-bold focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-sm" onchange="searchStore()">
+                                <select id="pluspayLevel" class="w-full text-xs border border-blue-200 rounded-lg p-2 bg-blue-50 text-blue-800 font-bold" onchange="searchStore()">
                                     <option value="old" selected>👤 舊戶 (最高 18.5%)</option>
                                     <option value="new">🌟 新戶 (最高 28.5%)</option>
                                 </select>
-                            </div>
-                        `;
+                            </div>`;
                     }
-                    
                     return `
                         <div class="flex flex-col bg-white p-3 border border-gray-200 rounded-xl shadow-sm hover:border-blue-400 transition-colors w-full">
                             <label class="flex items-center cursor-pointer w-full">
-                                <input type="checkbox" value="${method}" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 mr-2 flex-shrink-0" onchange="searchStore()">
+                                <input type="checkbox" value="${method}" checked class="w-4 h-4 text-blue-600 rounded mr-2 flex-shrink-0" onchange="searchStore()">
                                 ${formatPaymentName(method)}
                             </label>
                             ${extraDropdown}
-                        </div>
-                    `;
+                        </div>`;
                 }).join('');
             } else {
                 checkboxContainer.innerHTML = `<div class="text-xs text-rose-500 col-span-2 p-3 bg-rose-50 rounded-xl border border-rose-100">目前該區尚無資料</div>`;
@@ -255,12 +243,17 @@
             for (const method in countryObj) {
                 for (const plan in countryObj[method]) {
                     countryObj[method][plan].forEach(store => {
-                        currentCountryData.push({
-                            card: method, 
-                            name: store.name,
-                            plan: plan,
-                            rate: store.rate
-                        });
+                        let baseItem = { card: method, name: store.name, plan: plan };
+                        if (store.type === 'mileage') {
+                            baseItem.type = 'mileage';
+                            baseItem.ratio = store.ratio;
+                            baseItem.unit = store.unit;
+                            baseItem.rate = MILEAGE_VALUATION / store.ratio; 
+                        } else {
+                            baseItem.type = 'cashback';
+                            baseItem.rate = store.rate;
+                        }
+                        currentCountryData.push(baseItem);
                     });
                 }
             }
@@ -268,8 +261,8 @@
 
         function getPromoRule(item) {
             if (!item) return null;
-            if (item.name.includes('麥當勞APP點餐')) return { base: 0.03, bonus: 0.075, capAmt: 1066, desc: "最高刷 $1,066 拿滿 7.5% 額外加碼 (至10/31)" };
-            if (item.name.includes('星巴克儲值')) return { base: 0.03, bonus: 0.02, capAmt: 5000, desc: "最高刷 $5,000 拿滿 2% 額外加碼 (至9/30)" };
+            if (item.name.includes('麥當勞APP點餐')) return { base: 0.03, bonus: 0.075, capAmt: 1066, desc: "最高刷 $1,066 拿滿 7.5% 額外加碼" };
+            if (item.name.includes('星巴克儲值')) return { base: 0.03, bonus: 0.02, capAmt: 5000, desc: "最高刷 $5,000 拿滿 2% 額外加碼" };
             
             if (item.card === '玉山Unicard') {
                 const uLevel = document.getElementById('unicardLevel') ? document.getElementById('unicardLevel').value : 'up';
@@ -279,9 +272,7 @@
         }
 
         function searchMatch(val, name) {
-            const keywords = val.trim().toLowerCase().split(/\s+/);
-            const target = name.toLowerCase();
-            return keywords.every(kw => target.includes(kw));
+            return val.trim().toLowerCase().split(/\s+/).every(kw => name.toLowerCase().includes(kw));
         }
 
         function searchStore() {
@@ -299,49 +290,59 @@
                 searchMatch(val, item.name) && checkedMethods.includes(item.card)
             );
 
-            // 🛡️ 海外全通路自動打底神盾
-            if (currentCountry !== 'TW') {
-                const hasRichart = checkedMethods.some(m => m.includes('Richart') && !m.includes('台新Pay+'));
-                const hasCube = checkedMethods.some(m => m.includes('CUBE'));
-                const hasUnicard = checkedMethods.some(m => m.includes('玉山Unicard'));
+            // 🛡️ 國內外全通路自動打底神盾
+            const hasRichart = checkedMethods.some(m => m.includes('Richart') && !m.includes('台新Pay+'));
+            const hasCube = checkedMethods.some(m => m.includes('CUBE'));
+            const hasUnicard = checkedMethods.some(m => m.includes('玉山Unicard'));
+            const hasHsbc = checkedMethods.some(m => m.includes('滙豐'));
+            const hasStarlux = checkedMethods.some(m => m.includes('星宇'));
+            const hasDbs = checkedMethods.some(m => m.includes('星展'));
 
+            if (currentCountry !== 'TW') {
                 if (hasRichart && !matchedList.some(m => m.card.includes('Richart') && m.plan === '玩旅刷')) {
-                    matchedList.push({ card: "台新Richart", name: `${val} (實體/線上通用)`, plan: "玩旅刷", rate: 0.033, isBaseline: true });
+                    matchedList.push({ card: "台新Richart", name: `${val} (實體/線上通用)`, plan: "玩旅刷", type: 'cashback', rate: 0.033, isBaseline: true });
                 }
                 if (hasCube && !matchedList.some(m => m.card.includes('CUBE') && m.plan === '趣旅行')) {
-                    matchedList.push({ card: "CUBE卡", name: `${val} (海外實體通用)`, plan: "趣旅行", rate: 0.03, isBaseline: true });
+                    matchedList.push({ card: "CUBE卡", name: `${val} (海外實體通用)`, plan: "趣旅行", type: 'cashback', rate: 0.03, isBaseline: true });
                 }
                 if (hasUnicard) {
                     matchedList = matchedList.filter(m => m.card !== '玉山Unicard');
-                    const uLevel = document.getElementById('unicardLevel') ? document.getElementById('unicardLevel').value : 'up';
-                    const uConf = unicardConfig[uLevel];
-                    matchedList.push({ 
-                        card: "玉山Unicard", 
-                        name: `${val} (海外實體通用)`, 
-                        plan: uConf.name, 
-                        rate: uConf.base + uConf.bonus, 
-                        isBaseline: true 
-                    });
+                    const uConf = unicardConfig[document.getElementById('unicardLevel') ? document.getElementById('unicardLevel').value : 'up'];
+                    matchedList.push({ card: "玉山Unicard", name: `${val} (海外實體通用)`, plan: uConf.name, type: 'cashback', rate: uConf.base + uConf.bonus, isBaseline: true });
+                }
+                if (hasHsbc && !matchedList.some(m => m.card.includes('滙豐') && m.isBaseline)) {
+                    matchedList.push({ card: "滙豐旅人無限卡", name: `${val} (海外實體通用)`, plan: "海外消費", type: 'mileage', ratio: 10, unit: '哩', rate: MILEAGE_VALUATION/10, isBaseline: true });
+                    matchedList.push({ card: "滙豐旅人無限卡", name: `${val} (海外線上通用)`, plan: "海外消費", type: 'mileage', ratio: 10, unit: '哩', rate: MILEAGE_VALUATION/10, isBaseline: true });
+                }
+                if (hasStarlux && !matchedList.some(m => m.card.includes('星宇') && m.isBaseline)) {
+                    matchedList.push({ card: "玉山星宇世界卡", name: `${val} (海外實體通用)`, plan: "海外消費", type: 'mileage', ratio: 10, unit: '哩', rate: MILEAGE_VALUATION/10, isBaseline: true });
+                    matchedList.push({ card: "玉山星宇世界卡", name: `${val} (生日月海外實體)`, plan: "專屬加碼", type: 'mileage', ratio: 5, unit: '哩', rate: MILEAGE_VALUATION/5, isBaseline: true });
+                }
+                if (hasDbs && !matchedList.some(m => m.card.includes('星展') && m.isBaseline)) {
+                    matchedList.push({ card: "星展飛行世界之極卡", name: `${val} (海外實體通用)`, plan: "海外消費", type: 'mileage', ratio: 15, unit: '飛行基金', rate: MILEAGE_VALUATION/15, isBaseline: true });
+                }
+            } else {
+                if (hasHsbc && !matchedList.some(m => m.card.includes('滙豐') && m.isBaseline)) {
+                    matchedList.push({ card: "滙豐旅人無限卡", name: `${val} (國內實體通用)`, plan: "國內消費", type: 'mileage', ratio: 18, unit: '哩', rate: MILEAGE_VALUATION/18, isBaseline: true });
+                }
+                if (hasStarlux && !matchedList.some(m => m.card.includes('星宇') && m.isBaseline)) {
+                    matchedList.push({ card: "玉山星宇世界卡", name: `${val} (國內實體通用)`, plan: "國內消費", type: 'mileage', ratio: 20, unit: '哩', rate: MILEAGE_VALUATION/20, isBaseline: true });
+                }
+                if (hasDbs && !matchedList.some(m => m.card.includes('星展') && m.isBaseline)) {
+                    matchedList.push({ card: "星展飛行世界之極卡", name: `${val} (國內實體通用)`, plan: "國內消費", type: 'mileage', ratio: 18, unit: '飛行基金', rate: MILEAGE_VALUATION/18, isBaseline: true });
                 }
             }
 
-            // 🎯 動態覆蓋引擎：處理玉山及全盈Pay新舊戶
             matchedList.forEach(m => {
                 if (m.card === '玉山Unicard') {
-                    const uLevel = document.getElementById('unicardLevel') ? document.getElementById('unicardLevel').value : 'up';
-                    const uConf = unicardConfig[uLevel];
+                    const uConf = unicardConfig[document.getElementById('unicardLevel') ? document.getElementById('unicardLevel').value : 'up'];
                     m.rate = uConf.base + uConf.bonus; 
                     m.plan = uConf.name; 
                 } 
                 else if (m.card.includes('全盈Pay')) {
                     const pLevel = document.getElementById('pluspayLevel') ? document.getElementById('pluspayLevel').value : 'old';
-                    if (pLevel === 'old') {
-                        m.rate = 0.185;
-                        m.plan = "綁玉山數位/郵局 (舊戶)";
-                    } else {
-                        m.rate = 0.285;
-                        m.plan = "綁玉山數位/郵局 (限新戶)";
-                    }
+                    m.rate = pLevel === 'old' ? 0.185 : 0.285;
+                    m.plan = pLevel === 'old' ? "綁玉山數位/郵局 (舊戶)" : "綁玉山數位/郵局 (限新戶)";
                 }
             });
 
@@ -354,56 +355,58 @@
                 resDiv.innerHTML = `✅ 找到 ${matchedList.length} 個適用方案 (已為您排序)：<br><br>` + 
                                    matchedList.map(m => {
                                        let rule = getPromoRule(m); 
-                                       let rateDisplay = rule ? `(${Number((rule.base * 100).toFixed(2))}% + ${Number((rule.bonus * 100).toFixed(2))}%)` : `(${Number((m.rate * 100).toFixed(2))}%)`;
-                                       let extraNote = rule ? ` ➔ ⚠️ 封頂提醒：${rule.desc}` : '';
                                        
-                                       let badgeStyle = m.isBaseline 
-                                           ? 'text-indigo-600 bg-indigo-50 border-indigo-100' 
-                                           : 'text-rose-600 bg-rose-50 border-rose-100';
-                                       let badgeText = m.isBaseline 
-                                           ? `🛡️ 海外實體打底：${m.name}` 
-                                           : `📌 適用：${m.name}`;
+                                       let rateDisplay = '';
+                                       if (m.type === 'mileage') {
+                                           rateDisplay = `(${m.ratio}元/${m.unit})`;
+                                       } else {
+                                           rateDisplay = rule ? `(${Number((rule.base * 100).toFixed(2))}% + ${Number((rule.bonus * 100).toFixed(2))}%)` : `(${Number((m.rate * 100).toFixed(2))}%)`;
+                                       }
+
+                                       let extraNote = rule ? ` ➔ ⚠️ 封頂提醒：${rule.desc}` : '';
+                                       let badgeStyle = m.isBaseline ? 'text-indigo-600 bg-indigo-50 border-indigo-100' : 'text-rose-600 bg-rose-50 border-rose-100';
+                                       let badgeText = m.isBaseline ? `🛡️ 智能打底：${m.name}` : `📌 適用：${m.name}`;
 
                                        return `
                                        <div class="mb-3">
-                                           &bull; <b>[${m.card.replace(/ \(.+\)/, '')}]</b> ➔ 建議切換 <b>【${m.plan}】</b> ${rateDisplay}<br>
-                                           <span class="ml-4 mt-1 inline-block text-xs ${badgeStyle} px-2 py-0.5 rounded border">${badgeText}${extraNote}</span>
+                                           &bull; <b>[${m.card.replace(/ \(.+\)/, '')}]</b> ➔ 建議切換 <b>【${m.plan}】</b> <span class="font-bold text-rose-600">${rateDisplay}</span><br>
+                                           <span class="ml-4 mt-1 inline-block text-[11px] font-bold ${badgeStyle} px-2 py-0.5 rounded border">${badgeText}${extraNote}</span>
                                        </div>
                                        `;
                                    }).join('');
                 
-                let topRule = getPromoRule(window.currentBestMatch);
-                if (topRule) {
-                    document.getElementById('consumeRate').value = `${topRule.base * 100} + ${topRule.bonus * 100}`;
+                let topM = window.currentBestMatch;
+                if (topM.type === 'mileage') {
+                    document.getElementById('consumeRate').value = `${topM.ratio} 元/${topM.unit}`;
                 } else {
-                    document.getElementById('consumeRate').value = Number((window.currentBestMatch.rate * 100).toFixed(2)); 
+                    let topRule = getPromoRule(topM);
+                    document.getElementById('consumeRate').value = topRule ? `${topRule.base * 100} + ${topRule.bonus * 100}%` : `${Number((topM.rate * 100).toFixed(2))}%`; 
                 }
                 
                 calcPoints();
             } else { 
                 resDiv.classList.remove('hidden'); 
-                resDiv.innerHTML = `⚠️ 在您勾選的支付方式中，未找到符合通路。`; 
+                resDiv.innerHTML = `⚠️ 未找到符合通路。`; 
                 document.getElementById('consumeRate').value = '';
                 window.currentBestMatch = null;
                 calcPoints();
             }
         }
 
-        // 💱 包含即時匯率換算的精算系統
         function calcPoints() {
             const rawInputAmt = parseFloat(document.getElementById('consumeAmt').value) || 0; 
-            const rateInput = document.getElementById('consumeRate').value.toString().trim();
             const estDiv = document.getElementById('twdEstimate');
+            const match = window.currentBestMatch;
             
-            // 匯率換算邏輯
+            if (!match) return;
+
             let twdAmt = rawInputAmt;
             const currCode = countryCurrencyMap[currentCountry].code;
             
             if (currentCountry !== 'TW' && fxRates[currCode]) {
-                // fxRates[currCode] 是以 TWD 為基準的匯率 (例如 JPY 是 4.5 左右，代表 1 TWD = 4.5 JPY)
                 twdAmt = rawInputAmt / fxRates[currCode];
                 if (rawInputAmt > 0) {
-                    let displayRate = (1 / fxRates[currCode]).toFixed(4); // 顯示 0.22 這種常見格式
+                    let displayRate = (1 / fxRates[currCode]).toFixed(4); 
                     estDiv.innerHTML = `即時換算：約 <span class="text-blue-700">NT$ ${Math.round(twdAmt).toLocaleString()}</span> <span class="text-[9px] text-gray-400">(匯率 ${displayRate})</span>`;
                     estDiv.classList.remove('hidden');
                 } else {
@@ -413,30 +416,33 @@
                 estDiv.classList.add('hidden');
             }
             
-            // 後續全部以台幣金額 (twdAmt) 進行回饋與封頂計算
-            let totalReward = 0;
-            let isPromoCalc = false;
-            let rule = window.currentBestMatch ? getPromoRule(window.currentBestMatch) : null;
+            let resultHtml = '';
 
-            if (rule && rateInput === `${rule.base * 100} + ${rule.bonus * 100}`) {
-                let baseReward = twdAmt * rule.base;
-                let bonusReward = Math.min(twdAmt, rule.capAmt) * rule.bonus; 
-                totalReward = baseReward + bonusReward;
-                isPromoCalc = true;
-            } else {
-                let parsedRate = 0;
-                if (rateInput.includes('+')) {
-                    let parts = rateInput.split('+');
-                    parsedRate = (parseFloat(parts[0]) || 0) + (parseFloat(parts[1]) || 0);
-                } else {
-                    parsedRate = parseFloat(rateInput) || 0;
+            if (match.type === 'mileage') {
+                let miles = Math.floor(twdAmt / match.ratio); 
+                resultHtml = `預估回饋：${miles.toLocaleString()} ${match.unit}`;
+                if (currentCountry !== 'TW' && !match.card.includes('玉山Wallet')) {
+                    resultHtml += `<div class="text-[11px] text-gray-400 mt-2 font-normal">💡 海外實體交易可能產生 1.5% 手續費</div>`;
                 }
-                totalReward = twdAmt * (parsedRate / 100);
-            }
+            } 
+            else {
+                let totalReward = 0;
+                let isPromoCalc = false;
+                let rule = getPromoRule(match);
 
-            let resultHtml = `預估回饋：${Math.round(totalReward)}`;
-            if (isPromoCalc && twdAmt > rule.capAmt) {
-                resultHtml += `<div class="text-xs text-rose-500 mt-2 font-bold tracking-wide">⚠️ 已超過加碼上限，超出部分僅以基本 ${rule.base * 100}% 計算</div>`;
+                if (rule) {
+                    let baseReward = twdAmt * rule.base;
+                    let bonusReward = Math.min(twdAmt, rule.capAmt) * rule.bonus; 
+                    totalReward = baseReward + bonusReward;
+                    isPromoCalc = true;
+                } else {
+                    totalReward = twdAmt * match.rate;
+                }
+
+                resultHtml = `預估回饋：${Math.round(totalReward).toLocaleString()}`;
+                if (isPromoCalc && twdAmt > rule.capAmt) {
+                    resultHtml += `<div class="text-xs text-rose-500 mt-2 font-bold tracking-wide">⚠️ 已超過加碼上限，超出部分僅以基本 ${rule.base * 100}% 計算</div>`;
+                }
             }
             
             document.getElementById('pointResult').innerHTML = resultHtml;
