@@ -93,7 +93,7 @@
     </div>
 
     <!-- ======================================================= -->
-    <!-- 多國動態渲染邏輯 JS (含玉山動態覆蓋引擎) -->
+    <!-- 多國動態渲染邏輯 JS (含覆蓋引擎 & 浮點數修復) -->
     <!-- ======================================================= -->
     <script>
         let globalDatabase = {}; 
@@ -101,7 +101,7 @@
         window.currentBestMatch = null;
         let currentCountry = 'TW'; 
         
-        // 🔮 玉山 Unicard 專屬三層級規則庫 (1%無上限 + 額外加碼上限)
+        // 🔮 玉山 Unicard 專屬三層級規則庫
         const unicardConfig = {
             'simple': { name: '簡單選', base: 0.01, bonus: 0.02, capAmt: 50000, desc: "最高刷5萬拿滿2%加碼 (基本1%無上限)" },
             'any': { name: '任意選', base: 0.01, bonus: 0.025, capAmt: 40000, desc: "⚠️須APP自選特店！最高刷4萬拿滿2.5%加碼" },
@@ -180,15 +180,28 @@
             if (paymentMethods.length > 0) {
                 checkboxContainer.innerHTML = paymentMethods.map(method => {
                     let extraDropdown = '';
-                    // 偵測到玉山卡別，自動在下方插入獨立的下拉選單
+                    
+                    // 玉山Unicard 選單
                     if (method.includes('玉山Unicard')) {
                         extraDropdown = `
                             <div class="mt-2.5 pt-2.5 border-t border-gray-100">
-                                <label class="text-[10px] text-gray-400 font-bold mb-1 block">設定我的 Unicard 權益等級：</label>
+                                <label class="text-[10px] text-gray-400 font-bold mb-1 block">我的 Unicard 權益等級：</label>
                                 <select id="unicardLevel" class="w-full text-xs border border-emerald-200 rounded-lg p-2 bg-emerald-50 text-emerald-800 font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500 shadow-sm" onchange="searchStore()">
                                     <option value="up" selected>🏆 UP選 (最高 4.5% / 上限14.2萬)</option>
                                     <option value="any">🎯 任意選 (最高 3.5% / 上限4萬)</option>
                                     <option value="simple">🔰 簡單選 (最高 3% / 上限5萬)</option>
+                                </select>
+                            </div>
+                        `;
+                    } 
+                    // 全盈Pay 新舊戶選單
+                    else if (method.includes('全盈Pay')) {
+                        extraDropdown = `
+                            <div class="mt-2.5 pt-2.5 border-t border-gray-100">
+                                <label class="text-[10px] text-gray-400 font-bold mb-1 block">全盈Pay 帳戶資格：</label>
+                                <select id="pluspayLevel" class="w-full text-xs border border-blue-200 rounded-lg p-2 bg-blue-50 text-blue-800 font-bold focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-sm" onchange="searchStore()">
+                                    <option value="old" selected>👤 舊戶 (最高 18.5%)</option>
+                                    <option value="new">🌟 新戶 (最高 28.5%)</option>
                                 </select>
                             </div>
                         `;
@@ -223,13 +236,12 @@
             }
         }
 
-        // 智慧判斷引擎：將玉山邏輯整合進拆單計算
+        // 智慧判斷引擎：整合玉山與特定特店
         function getPromoRule(item) {
             if (!item) return null;
             if (item.name.includes('麥當勞APP點餐')) return { base: 0.03, bonus: 0.075, capAmt: 1066, desc: "最高刷 $1,066 拿滿 7.5% 額外加碼 (至10/31)" };
             if (item.name.includes('星巴克儲值')) return { base: 0.03, bonus: 0.02, capAmt: 5000, desc: "最高刷 $5,000 拿滿 2% 額外加碼 (至9/30)" };
             
-            // 偵測是否為玉山Unicard，直接返回對應等級的 Base與Bonus 參數
             if (item.card === '玉山Unicard') {
                 const uLevel = document.getElementById('unicardLevel') ? document.getElementById('unicardLevel').value : 'up';
                 return unicardConfig[uLevel];
@@ -254,12 +266,11 @@
                 return; 
             }
 
-            // 1. 先抓出一般吻合項目
             let matchedList = currentCountryData.filter(item => 
                 searchMatch(val, item.name) && checkedMethods.includes(item.card)
             );
 
-            // 2. 🛡️ 海外全通路自動打底神盾
+            // 🛡️ 海外全通路自動打底神盾
             if (currentCountry !== 'TW') {
                 const hasRichart = checkedMethods.some(m => m.includes('Richart') && !m.includes('台新Pay+'));
                 const hasCube = checkedMethods.some(m => m.includes('CUBE'));
@@ -272,7 +283,6 @@
                     matchedList.push({ card: "CUBE卡", name: `${val} (海外實體通用)`, plan: "趣旅行", rate: 0.03, isBaseline: true });
                 }
                 if (hasUnicard) {
-                    // 自動排除 JSON 裡的死板玉山設定，改由動態神盾接管
                     matchedList = matchedList.filter(m => m.card !== '玉山Unicard');
                     const uLevel = document.getElementById('unicardLevel') ? document.getElementById('unicardLevel').value : 'up';
                     const uConf = unicardConfig[uLevel];
@@ -281,23 +291,32 @@
                         card: "玉山Unicard", 
                         name: `${val} (海外實體通用)`, 
                         plan: uConf.name, 
-                        rate: uConf.base + uConf.bonus, // 真實回饋率：1% + Bonus%
+                        rate: uConf.base + uConf.bonus, 
                         isBaseline: true 
                     });
                 }
             }
 
-            // 3. 🎯 玉山動態覆蓋引擎：無論哪一國，遇到玉山卡就動態賦予當前選單的趴數
+            // 🎯 動態覆蓋引擎：處理玉山及全盈Pay新舊戶
             matchedList.forEach(m => {
                 if (m.card === '玉山Unicard') {
                     const uLevel = document.getElementById('unicardLevel') ? document.getElementById('unicardLevel').value : 'up';
                     const uConf = unicardConfig[uLevel];
-                    m.rate = uConf.base + uConf.bonus; // 即時變換回饋率
-                    m.plan = uConf.name; // 即時變更方案名稱
+                    m.rate = uConf.base + uConf.bonus; 
+                    m.plan = uConf.name; 
+                } 
+                else if (m.card.includes('全盈Pay')) {
+                    const pLevel = document.getElementById('pluspayLevel') ? document.getElementById('pluspayLevel').value : 'old';
+                    if (pLevel === 'old') {
+                        m.rate = 0.185;
+                        m.plan = "綁玉山數位/郵局 (舊戶)";
+                    } else {
+                        m.rate = 0.285;
+                        m.plan = "綁玉山數位/郵局 (限新戶)";
+                    }
                 }
             });
 
-            // 覆蓋完畢後重新大排序
             matchedList.sort((a, b) => b.rate - a.rate);
 
             if (matchedList.length > 0) {
@@ -306,8 +325,9 @@
                 
                 resDiv.innerHTML = `✅ 找到 ${matchedList.length} 個適用方案 (已為您排序)：<br><br>` + 
                                    matchedList.map(m => {
-                                       let rule = getPromoRule(m); // 傳入物件供玉山引擎辨識
-                                       let rateDisplay = rule ? `(${rule.base * 100}% + ${rule.bonus * 100}%)` : `(${Number((m.rate * 100).toFixed(1))}%)`;
+                                       let rule = getPromoRule(m); 
+                                       // 🚀 關鍵修復：使用 toFixed(2) 解決浮點數顯示誤差 (例如 3.500000000004%)
+                                       let rateDisplay = rule ? `(${Number((rule.base * 100).toFixed(2))}% + ${Number((rule.bonus * 100).toFixed(2))}%)` : `(${Number((m.rate * 100).toFixed(2))}%)`;
                                        let extraNote = rule ? ` ➔ ⚠️ 封頂提醒：${rule.desc}` : '';
                                        
                                        let badgeStyle = m.isBaseline 
@@ -329,7 +349,7 @@
                 if (topRule) {
                     document.getElementById('consumeRate').value = `${topRule.base * 100} + ${topRule.bonus * 100}`;
                 } else {
-                    document.getElementById('consumeRate').value = Number((window.currentBestMatch.rate * 100).toFixed(1)); 
+                    document.getElementById('consumeRate').value = Number((window.currentBestMatch.rate * 100).toFixed(2)); 
                 }
                 
                 calcPoints();
@@ -352,7 +372,7 @@
 
             if (rule && rateInput === `${rule.base * 100} + ${rule.bonus * 100}`) {
                 let baseReward = amt * rule.base;
-                let bonusReward = Math.min(amt, rule.capAmt) * rule.bonus; // 加碼部分卡上限
+                let bonusReward = Math.min(amt, rule.capAmt) * rule.bonus; 
                 totalReward = baseReward + bonusReward;
                 isPromoCalc = true;
             } else {
