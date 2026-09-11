@@ -24,7 +24,7 @@
     
     <div class="w-full max-w-md bg-white rounded-[24px] shadow-lg overflow-hidden mb-8">
         
-        <!-- 🎨 專業級 App Header 區塊 (已加深為介於中間的藍色 bg-blue-200) -->
+        <!-- 🎨 專業級 App Header 區塊 -->
         <div class="bg-blue-200 py-5 px-6 border-b border-blue-300">
             <h2 class="text-[22px] font-black text-center text-gray-900 tracking-wide flex justify-center items-center">
                 <i class="fas fa-credit-card text-blue-600 mr-2 text-2xl"></i>信用卡切換速查
@@ -42,9 +42,12 @@
                 </div>
             </div>
 
-            <!-- 🗂️ 動態產生：我的支付車庫 -->
-            <div class="mb-6" id="garageContainer">
-                <div class="text-center text-xs text-gray-400 py-4">載入支付車庫中...</div>
+            <!-- 🗂️ 動態折疊車庫 (Accordion) -->
+            <div class="mb-5">
+                <label class="block text-gray-700 text-sm font-bold mb-3">請勾選該區可用的支付/信用卡：</label>
+                <div id="garageContainer">
+                    <div class="text-center text-xs text-gray-400 py-4">載入支付車庫中...</div>
+                </div>
             </div>
 
             <!-- 🔍 搜尋店名 -->
@@ -96,7 +99,7 @@
     </div>
 
     <!-- ======================================================= -->
-    <!-- JS 邏輯區 (保留終極過濾防呆與所有功能) -->
+    <!-- JS 邏輯區 (含手風琴折疊特效) -->
     <!-- ======================================================= -->
     <script>
         let globalDatabase = {}; 
@@ -231,6 +234,19 @@
             searchStore();
         };
 
+        // 🌟 展開/收合手風琴功能的 JS 函數
+        window.toggleCategory = function(contentId, iconId) {
+            const content = document.getElementById(contentId);
+            const icon = document.getElementById(iconId);
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                content.classList.add('hidden');
+                icon.style.transform = 'rotate(180deg)';
+            }
+        };
+
         function buildCheckboxBlock(method) {
             let extraDropdown = '';
             if (method.includes('玉山Unicard')) {
@@ -274,15 +290,16 @@
                     </div>`;
             }
             return `
-                <div class="flex flex-col bg-white p-2.5 border border-gray-200 rounded-xl shadow-sm hover:border-blue-400 transition-colors w-full">
+                <div class="flex flex-col bg-white/80 p-2.5 rounded-lg border border-gray-200 shadow-sm hover:border-blue-400 transition-colors w-full">
                     <label class="flex items-center cursor-pointer w-full">
-                        <input type="checkbox" value="${method}" checked class="w-4 h-4 text-blue-600 rounded mr-2 flex-shrink-0" onchange="searchStore()">
+                        <input type="checkbox" value="${method}" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 mr-2 flex-shrink-0" onchange="searchStore()">
                         ${formatPaymentNameWithImage(method)}
                     </label>
                     ${extraDropdown}
                 </div>`;
         }
 
+        // 🎯 渲染手風琴介面 (Accordion UI)
         function renderDynamicUI(countryCode) {
             const countryObj = globalDatabase[countryCode] || {};
             const paymentMethods = Object.keys(countryObj);
@@ -294,9 +311,9 @@
             }
 
             let categories = {
-                mobile: { title: '📱 行動支付', items: [], color: 'bg-blue-50 border-blue-100 text-blue-800' },
-                mileage: { title: '✈️ 航空哩程卡', items: [], color: 'bg-slate-100 border-slate-200 text-slate-800' },
-                cashback: { title: '💰 點數 / 現金回饋', items: [], color: 'bg-emerald-50 border-emerald-100 text-emerald-800' }
+                mobile: { title: '📱 行動支付', items: [], headerBg: 'bg-blue-100', contentBg: 'bg-blue-50/50', borderColor: 'border-blue-200', textColor: 'text-blue-800' },
+                mileage: { title: '✈️ 航空哩程卡', items: [], headerBg: 'bg-slate-200', contentBg: 'bg-slate-50/50', borderColor: 'border-slate-300', textColor: 'text-slate-800' },
+                cashback: { title: '💰 點數 / 現金回饋', items: [], headerBg: 'bg-emerald-100', contentBg: 'bg-emerald-50/50', borderColor: 'border-emerald-200', textColor: 'text-emerald-800' }
             };
 
             paymentMethods.forEach(method => {
@@ -317,12 +334,18 @@
             for (let catKey in categories) {
                 let cat = categories[catKey];
                 if (cat.items.length > 0) {
+                    let contentId = `cat-content-${catKey}`;
+                    let iconId = `cat-icon-${catKey}`;
+                    
                     finalHtml += `
-                        <div class="mb-4">
-                            <h3 class="text-xs font-bold px-3 py-1.5 rounded-t-lg border-b-0 border inline-block ${cat.color}">
-                                ${cat.title}
-                            </h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 p-3 rounded-b-lg rounded-tr-lg border ${cat.color.replace('text-', 'border-').split(' ')[1]} bg-white/50">
+                        <div class="mb-3 rounded-xl border ${cat.borderColor} overflow-hidden shadow-sm">
+                            <div class="flex justify-between items-center px-4 py-2.5 cursor-pointer ${cat.headerBg} hover:brightness-95 transition-all" onclick="toggleCategory('${contentId}', '${iconId}')">
+                                <h3 class="text-[13px] font-bold ${cat.textColor}">
+                                    ${cat.title} <span class="text-[11px] ml-1 font-normal opacity-70 border border-current px-1.5 py-0.5 rounded-full">${cat.items.length}</span>
+                                </h3>
+                                <i id="${iconId}" class="fas fa-chevron-up ${cat.textColor} transition-transform duration-300"></i>
+                            </div>
+                            <div id="${contentId}" class="grid grid-cols-1 md:grid-cols-2 gap-2 p-3 ${cat.contentBg} transition-all duration-300 origin-top">
                                 ${cat.items.join('')}
                             </div>
                         </div>
@@ -474,7 +497,6 @@
                 return true;
             });
 
-            // 🛑 終極防呆：過濾同卡、同方案重複顯示
             const uniqueMap = new Map();
             matchedList.forEach(m => {
                 let key = `${m.card}_${m.plan}_${m.rate}`;
@@ -507,7 +529,7 @@
 
                                        let extraNote = rule ? ` ➔ ⚠️ 封頂提醒：${rule.desc}` : '';
                                        let badgeStyle = m.isBaseline ? 'text-indigo-600 bg-indigo-50 border-indigo-100' : 'text-rose-600 bg-rose-50 border-rose-100';
-                                       let badgeText = m.isBaseline ? `🛡️ ${m.name}` : `📌 適用：${m.name}`;
+                                       let badgeText = m.isBaseline ? `🛡️ 通用保底：${m.name}` : `📌 適用：${m.name}`;
 
                                        return `
                                        <div class="mb-3">
