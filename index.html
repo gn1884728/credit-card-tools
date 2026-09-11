@@ -48,22 +48,12 @@
             </div>
         </div>
 
-        <!-- 🗂️ 我的信用卡車庫 -->
+        <!-- 🗂️ 動態產生：我的支付車庫 -->
         <div class="mb-5 p-4 bg-gray-50 rounded-xl border border-gray-100">
-            <label class="block text-gray-700 text-sm font-bold mb-3">請勾選您持有的信用卡：</label>
+            <label class="block text-gray-700 text-sm font-bold mb-3">請勾選該區可用的支付/信用卡：</label>
+            <!-- 這裡的內容會由 JS 根據國家自動長出來 -->
             <div class="grid grid-cols-2 gap-3 text-sm text-gray-600" id="cardCheckboxes">
-                <label class="flex items-center space-x-2 cursor-pointer">
-                    <input type="checkbox" value="CUBE卡" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
-                    <span class="font-bold">國泰 CUBE 卡</span>
-                </label>
-                <label class="flex items-center space-x-2 cursor-pointer">
-                    <input type="checkbox" value="台新Richart" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
-                    <span class="font-bold">台新 Richart 體系</span>
-                </label>
-                <label class="flex items-center space-x-2 cursor-pointer">
-                    <input type="checkbox" value="玉山Unicard" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
-                    <span class="font-bold">玉山 Unicard</span>
-                </label>
+                <div class="text-xs text-gray-400">載入中...</div>
             </div>
         </div>
 
@@ -96,19 +86,6 @@
             預估回饋：0
         </div>
 
-        <!-- 🚀 查無特店回報區塊 -->
-        <div class="border-t border-gray-100 pt-5 mt-2">
-            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-100 flex items-center justify-between">
-                <div>
-                    <h4 class="text-sm font-bold text-blue-800 mb-1">查無特店？歡迎回報 🚀</h4>
-                    <p class="text-xs text-gray-500 font-bold">提供截圖，擴大資料庫</p>
-                </div>
-                <a href="https://forms.gle/xLTZqzGPGXib2zYj6" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 px-4 rounded-lg shadow transition-colors whitespace-nowrap">
-                    提供截圖
-                </a>
-            </div>
-        </div>
-
         <!-- 反向連結 -->
         <div class="text-center mt-6">
             <a href="https://fongarea.com" target="_blank" class="text-xs text-gray-400 hover:text-blue-500 font-bold transition-colors">
@@ -118,57 +95,82 @@
     </div>
 
     <!-- ======================================================= -->
-    <!-- 多卡決策邏輯 JS -->
+    <!-- 多國動態渲染邏輯 JS -->
     <!-- ======================================================= -->
     <script>
-        let customCubeData = [];
+        let globalDatabase = {}; 
+        let currentCountryData = []; 
         window.currentBestMatch = null;
         let currentCountry = 'TW'; // 預設國家
         
-        // 讀取多卡資料庫
+        // 讀取全新多國資料庫
         fetch('cube_config.json')
             .then(response => response.json())
             .then(data => {
-                for (const cardName in data) {
-                    for (const planName in data[cardName]) {
-                        data[cardName][planName].forEach(store => {
-                            customCubeData.push({
-                                card: cardName,
-                                name: store.name,
-                                plan: planName,
-                                rate: store.rate
-                            });
-                        });
-                    }
-                }
+                globalDatabase = data;
+                // 初始化畫面為台灣
+                renderDynamicUI('TW');
             })
             .catch(error => console.error('無法載入資料庫:', error));
 
-        // 國家切換與動態 Placeholder 炫技邏輯
+        // 國家提示詞字典
         const countryPlaceholders = {
             'TW': '輸入店名速查 (例如：麥當勞、星巴克)...',
             'JP': '輸入店名速查 (例如：唐吉訶德、BicCamera)...',
-            'KR': '輸入店名速查 (例如：樂天超市、Olive Young)...',
-            'TH': '輸入店名速查 (例如：Big C、Let\'s Relax)...'
+            'KR': '輸入店名速查 (例如：樂天免稅店、Olive Young)...',
+            'TH': '輸入店名速查 (例如：泰國 7-11、Grab)...'
         };
 
         function setCountry(code, btn) {
             currentCountry = code;
             
-            // 重置所有按鈕樣式
+            // 處理頂部按鈕 UI 變更
             document.querySelectorAll('.country-btn').forEach(b => {
                 b.className = 'country-btn flex-shrink-0 bg-white text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-bold shadow-sm hover:bg-gray-50 transition-all';
             });
-            // 亮起當前點擊的按鈕並放大
             btn.className = 'country-btn flex-shrink-0 bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-bold shadow-md transition-all transform scale-105';
             
-            // 動態變更搜尋框 Placeholder
-            const searchInput = document.getElementById('storeSearch');
-            searchInput.placeholder = countryPlaceholders[code];
+            // 更換 Placeholder 提示字
+            document.getElementById('storeSearch').placeholder = countryPlaceholders[code];
+            document.getElementById('storeSearch').value = '';
             
-            // 清空當前搜尋結果並重新觸發搜尋 (為未來資料庫分離做準備)
-            searchInput.value = '';
+            // 動態重新渲染該國適用的卡片與支付選項
+            renderDynamicUI(code);
             searchStore();
+        }
+
+        // 動態產生勾選按鈕並扁平化該國資料
+        function renderDynamicUI(countryCode) {
+            const countryObj = globalDatabase[countryCode] || {};
+            const paymentMethods = Object.keys(countryObj);
+            
+            // 1. 動態長出勾選框 (預設全勾)
+            const checkboxContainer = document.getElementById('cardCheckboxes');
+            if (paymentMethods.length > 0) {
+                checkboxContainer.innerHTML = paymentMethods.map(method => `
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" value="${method}" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" onchange="searchStore()">
+                        <span class="font-bold whitespace-nowrap overflow-hidden text-ellipsis" title="${method}">${method}</span>
+                    </label>
+                `).join('');
+            } else {
+                checkboxContainer.innerHTML = `<div class="text-xs text-rose-500 col-span-2">目前該區尚無資料</div>`;
+            }
+
+            // 2. 扁平化當前國家的資料供搜尋引擎使用
+            currentCountryData = [];
+            for (const method in countryObj) {
+                for (const plan in countryObj[method]) {
+                    countryObj[method][plan].forEach(store => {
+                        currentCountryData.push({
+                            card: method, // 現在 card 欄位代表的是「支付方式」或「信用卡」
+                            name: store.name,
+                            plan: plan,
+                            rate: store.rate
+                        });
+                    });
+                }
+            }
         }
 
         // 【智慧封頂規則庫】
@@ -183,7 +185,6 @@
             return null;
         }
 
-        // 精準關鍵字比對
         function searchMatch(val, name) {
             const keywords = val.trim().toLowerCase().split(/\s+/);
             const target = name.toLowerCase();
@@ -193,20 +194,18 @@
         function searchStore() {
             const val = document.getElementById('storeSearch').value.trim(); 
             const resDiv = document.getElementById('storeResult');
-            const checkedCards = Array.from(document.querySelectorAll('#cardCheckboxes input:checked')).map(cb => cb.value);
+            // 抓取畫面上目前有被打勾的支付選項
+            const checkedMethods = Array.from(document.querySelectorAll('#cardCheckboxes input:checked')).map(cb => cb.value);
 
-            // 未來可在這裡加入過濾國家的邏輯 (例如 && item.country === currentCountry)
-            // 目前先共用同一個資料庫展示
-            
-            if (!val || customCubeData.length === 0) { 
+            if (!val || currentCountryData.length === 0) { 
                 resDiv.classList.add('hidden'); 
                 window.currentBestMatch = null;
                 return; 
             }
 
-            // 過濾並排序
-            let matchedList = customCubeData.filter(item => 
-                searchMatch(val, item.name) && checkedCards.includes(item.card)
+            // 在當前國家的資料庫中進行比對
+            let matchedList = currentCountryData.filter(item => 
+                searchMatch(val, item.name) && checkedMethods.includes(item.card)
             );
             matchedList.sort((a, b) => b.rate - a.rate);
 
@@ -214,7 +213,6 @@
                 resDiv.classList.remove('hidden'); 
                 window.currentBestMatch = matchedList[0];
                 
-                // 動態渲染結果列表 (套用封頂規則顯示)
                 resDiv.innerHTML = `✅ 找到 ${matchedList.length} 個適用方案 (已為您排序)：<br><br>` + 
                                    matchedList.map(m => {
                                        let rule = getPromoRule(m.name);
@@ -229,7 +227,6 @@
                                        `;
                                    }).join('');
                 
-                // 設定回饋率輸入框
                 let topRule = getPromoRule(window.currentBestMatch.name);
                 if (topRule) {
                     document.getElementById('consumeRate').value = `${topRule.base * 100} + ${topRule.bonus * 100}`;
@@ -240,14 +237,14 @@
                 calcPoints();
             } else { 
                 resDiv.classList.remove('hidden'); 
-                resDiv.innerHTML = `⚠️ 在您勾選的卡片中，未找到符合通路。`; 
+                resDiv.innerHTML = `⚠️ 在您勾選的支付方式中，未找到符合通路。`; 
                 document.getElementById('consumeRate').value = '';
                 window.currentBestMatch = null;
                 calcPoints();
             }
         }
 
-        // 智慧結算系統 (含超額判定)
+        // 智慧結算系統
         function calcPoints() {
             const amt = parseFloat(document.getElementById('consumeAmt').value) || 0; 
             const rateInput = document.getElementById('consumeRate').value.toString().trim();
