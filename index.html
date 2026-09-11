@@ -25,15 +25,28 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { padding-bottom: env(safe-area-inset-bottom); }
+        /* 隱藏捲動條但保留水平捲動功能，提升質感 */
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen font-sans flex justify-center items-start pt-10 px-4">
     
-    <div class="w-full max-w-md bg-white p-6 rounded-[24px] shadow-lg border-t-4 border-blue-600 mb-8 relative">
+    <div class="w-full max-w-md bg-white p-6 rounded-[24px] shadow-lg border-t-4 border-blue-600 mb-8 relative overflow-hidden">
         
-        <h2 class="text-xl font-bold mb-6 text-center text-black">
+        <h2 class="text-xl font-bold mb-5 text-center text-black">
             <i class="fas fa-credit-card text-blue-600 mr-2"></i>信用卡切換速查
         </h2>
+
+        <!-- 🌍 多國切換列 (炫技區塊) -->
+        <div class="mb-5">
+            <div class="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide" id="countrySelector">
+                <button onclick="setCountry('TW', this)" class="country-btn flex-shrink-0 bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-bold shadow-md transition-all transform scale-105">🇹🇼 台灣</button>
+                <button onclick="setCountry('JP', this)" class="country-btn flex-shrink-0 bg-white text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-bold shadow-sm hover:bg-gray-50 transition-all">🇯🇵 日本</button>
+                <button onclick="setCountry('KR', this)" class="country-btn flex-shrink-0 bg-white text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-bold shadow-sm hover:bg-gray-50 transition-all">🇰🇷 韓國</button>
+                <button onclick="setCountry('TH', this)" class="country-btn flex-shrink-0 bg-white text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-bold shadow-sm hover:bg-gray-50 transition-all">🇹🇭 泰國</button>
+            </div>
+        </div>
 
         <!-- 🗂️ 我的信用卡車庫 -->
         <div class="mb-5 p-4 bg-gray-50 rounded-xl border border-gray-100">
@@ -110,6 +123,7 @@
     <script>
         let customCubeData = [];
         window.currentBestMatch = null;
+        let currentCountry = 'TW'; // 預設國家
         
         // 讀取多卡資料庫
         fetch('cube_config.json')
@@ -129,6 +143,33 @@
                 }
             })
             .catch(error => console.error('無法載入資料庫:', error));
+
+        // 國家切換與動態 Placeholder 炫技邏輯
+        const countryPlaceholders = {
+            'TW': '輸入店名速查 (例如：麥當勞、星巴克)...',
+            'JP': '輸入店名速查 (例如：唐吉訶德、BicCamera)...',
+            'KR': '輸入店名速查 (例如：樂天超市、Olive Young)...',
+            'TH': '輸入店名速查 (例如：Big C、Let\'s Relax)...'
+        };
+
+        function setCountry(code, btn) {
+            currentCountry = code;
+            
+            // 重置所有按鈕樣式
+            document.querySelectorAll('.country-btn').forEach(b => {
+                b.className = 'country-btn flex-shrink-0 bg-white text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-bold shadow-sm hover:bg-gray-50 transition-all';
+            });
+            // 亮起當前點擊的按鈕並放大
+            btn.className = 'country-btn flex-shrink-0 bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-bold shadow-md transition-all transform scale-105';
+            
+            // 動態變更搜尋框 Placeholder
+            const searchInput = document.getElementById('storeSearch');
+            searchInput.placeholder = countryPlaceholders[code];
+            
+            // 清空當前搜尋結果並重新觸發搜尋 (為未來資料庫分離做準備)
+            searchInput.value = '';
+            searchStore();
+        }
 
         // 【智慧封頂規則庫】
         function getPromoRule(name) {
@@ -154,6 +195,9 @@
             const resDiv = document.getElementById('storeResult');
             const checkedCards = Array.from(document.querySelectorAll('#cardCheckboxes input:checked')).map(cb => cb.value);
 
+            // 未來可在這裡加入過濾國家的邏輯 (例如 && item.country === currentCountry)
+            // 目前先共用同一個資料庫展示
+            
             if (!val || customCubeData.length === 0) { 
                 resDiv.classList.add('hidden'); 
                 window.currentBestMatch = null;
