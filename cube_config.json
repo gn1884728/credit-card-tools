@@ -31,6 +31,18 @@
         {"name":"日本超商 (7-11/Lawson/FamilyMart)", "rate":0.045}
       ]
     },
+    "台新Pay+ (跨境支付)": {
+      "掃碼支付 (PayPay通路)": [
+        {"name":"三越", "rate":0.03},
+        {"name":"伊勢丹", "rate":0.03},
+        {"name":"西武・SOGO", "rate":0.03},
+        {"name":"松本清", "rate":0.03},
+        {"name":"SUNDRUG", "rate":0.03},
+        {"name":"鶴羽藥妝", "rate":0.03},
+        {"name":"BicCamera", "rate":0.03},
+        {"name":"愛電王 EDION", "rate":0.03}
+      ]
+    },
     "CUBE卡": {
       "趣旅行": [
         {"name":"日本實體消費", "rate":0.03},
@@ -54,6 +66,11 @@
         {"name":"OLIVE YOUNG", "rate":0.03},
         {"name":"CU便利商店", "rate":0.03},
         {"name":"樂天免稅店", "rate":0.03}
+      ]
+    },
+    "台新Pay+ (跨境支付)": {
+      "掃碼支付": [
+        {"name":"韓國特約店家", "rate":0.03}
       ]
     },
     "CUBE卡": {
