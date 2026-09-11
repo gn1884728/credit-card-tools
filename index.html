@@ -12,7 +12,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { padding-bottom: env(safe-area-inset-bottom); }
+        body { padding-bottom: env(safe-area-inset-bottom); background-color: #f3f4f6; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         .text-truncate-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -20,69 +20,84 @@
         img.loaded { display: block; width: 36px; height: 24px; object-fit: cover; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); margin-right: 8px; margin-top: 2px; flex-shrink: 0; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen font-sans flex justify-center items-start pt-10 px-4">
+<body class="min-h-screen font-sans flex justify-center items-start pt-6 px-4">
     
-    <div class="w-full max-w-md bg-white p-6 rounded-[24px] shadow-lg border-t-4 border-blue-600 mb-8 relative overflow-hidden">
+    <div class="w-full max-w-md bg-white rounded-[24px] shadow-lg overflow-hidden mb-8">
         
-        <h2 class="text-xl font-bold mb-5 text-center text-black">
-            <i class="fas fa-credit-card text-blue-600 mr-2"></i>信用卡切換速查
-        </h2>
-
-        <div class="mb-5">
-            <div class="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide" id="countrySelector">
-                <button onclick="setCountry('TW', this)" class="country-btn flex-shrink-0 bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-bold shadow-md transition-all transform scale-105">🇹🇼 台灣</button>
-                <button onclick="setCountry('JP', this)" class="country-btn flex-shrink-0 bg-white text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-bold shadow-sm hover:bg-gray-50 transition-all">🇯🇵 日本</button>
-                <button onclick="setCountry('KR', this)" class="country-btn flex-shrink-0 bg-white text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-bold shadow-sm hover:bg-gray-50 transition-all">🇰🇷 韓國</button>
-                <button onclick="setCountry('TH', this)" class="country-btn flex-shrink-0 bg-white text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-bold shadow-sm hover:bg-gray-50 transition-all">🇹🇭 泰國</button>
-            </div>
+        <!-- 🎨 專業級 App 淺藍色 Header 區塊 -->
+        <div class="bg-[#EBF3FF] py-5 px-6 border-b border-blue-100">
+            <h2 class="text-[22px] font-black text-center text-gray-900 tracking-wide flex justify-center items-center">
+                <i class="fas fa-credit-card text-blue-600 mr-2 text-2xl"></i>信用卡切換速查
+            </h2>
         </div>
 
-        <div class="mb-6" id="garageContainer">
-            <div class="text-center text-xs text-gray-400 py-4">載入支付車庫中...</div>
-        </div>
-
-        <div class="mb-5 relative">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <i class="fas fa-search text-gray-400"></i>
-            </div>
-            <input type="text" id="storeSearch" oninput="searchStore()" placeholder="輸入店名速查..." class="w-full pl-9 pr-4 py-3 border border-gray-100 rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 font-bold shadow-sm transition-colors">
-        </div>
-        
-        <div id="storeResult" class="p-4 bg-blue-50 rounded-xl mb-5 text-sm font-bold text-blue-800 hidden border border-blue-100"></div>
-        
-        <div class="grid grid-cols-2 gap-4 mb-6">
-            <div>
-                <label class="block text-blue-800 text-xs mb-2 font-bold" id="amtLabel">消費金額 (台幣 TWD)</label>
-                <input type="number" id="consumeAmt" placeholder="輸入當地金額" class="w-full p-3 border border-gray-100 rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 font-bold shadow-sm" oninput="calcPoints()">
-                <div id="twdEstimate" class="mt-1.5 text-[10px] text-gray-500 font-bold hidden bg-blue-50 p-1.5 rounded-lg border border-blue-100 tracking-wide text-center"></div>
-            </div>
-            <div>
-                <label class="block text-gray-500 text-xs mb-2 font-bold">最優回饋率 / 哩程比</label>
-                <input type="text" id="consumeRate" readonly placeholder="例如: 3%" class="w-full p-3 border border-gray-100 rounded-xl bg-gray-50 text-sm focus:outline-none text-gray-700 font-bold shadow-sm">
-            </div>
-        </div>
-        
-        <div id="pointResult" class="text-center text-xl font-bold text-rose-600 py-4 bg-rose-50 rounded-xl mb-6 border border-rose-100 tracking-wide flex flex-col justify-center items-center min-h-[80px]">
-            預估回饋：0
-        </div>
-
-        <div class="border-t border-gray-100 pt-5 mt-2">
-            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-100 flex items-center justify-between">
-                <div>
-                    <h4 class="text-sm font-bold text-blue-800 mb-1">查無特店？歡迎回報 🚀</h4>
-                    <p class="text-xs text-gray-500 font-bold">提供截圖，擴大資料庫</p>
+        <div class="p-6 pt-5">
+            <!-- 🌍 多國切換列 -->
+            <div class="mb-5">
+                <div class="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide" id="countrySelector">
+                    <button onclick="setCountry('TW', this)" class="country-btn flex-shrink-0 bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-bold shadow-md transition-all transform scale-105">🇹🇼 台灣</button>
+                    <button onclick="setCountry('JP', this)" class="country-btn flex-shrink-0 bg-white text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-bold shadow-sm hover:bg-gray-50 transition-all">🇯🇵 日本</button>
+                    <button onclick="setCountry('KR', this)" class="country-btn flex-shrink-0 bg-white text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-bold shadow-sm hover:bg-gray-50 transition-all">🇰🇷 韓國</button>
+                    <button onclick="setCountry('TH', this)" class="country-btn flex-shrink-0 bg-white text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-bold shadow-sm hover:bg-gray-50 transition-all">🇹🇭 泰國</button>
                 </div>
-                <a href="https://forms.gle/xLTZqzGPGXib2zYj6" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 px-4 rounded-lg shadow transition-colors whitespace-nowrap">
-                    提供截圖
-                </a>
             </div>
-        </div>
 
-        <div class="text-center mt-6">
-            <a href="https://fongarea.com" target="_blank" class="text-xs text-gray-400 hover:text-blue-500 font-bold transition-colors">&copy; 2026 瘋哥的3c盒子</a>
+            <!-- 🗂️ 動態產生：我的支付車庫 -->
+            <div class="mb-6" id="garageContainer">
+                <div class="text-center text-xs text-gray-400 py-4">載入支付車庫中...</div>
+            </div>
+
+            <!-- 🔍 搜尋店名 -->
+            <div class="mb-5 relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-search text-gray-400"></i>
+                </div>
+                <input type="text" id="storeSearch" oninput="searchStore()" placeholder="輸入店名速查..." class="w-full pl-9 pr-4 py-3 border border-gray-100 rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 font-bold shadow-sm transition-colors">
+            </div>
+            
+            <!-- 搜尋結果顯示區 -->
+            <div id="storeResult" class="p-4 bg-blue-50 rounded-xl mb-5 text-sm font-bold text-blue-800 hidden border border-blue-100"></div>
+            
+            <!-- 💰 消費金額與回饋率 -->
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                    <label class="block text-blue-800 text-xs mb-2 font-bold" id="amtLabel">消費金額 (台幣 TWD)</label>
+                    <input type="number" id="consumeAmt" placeholder="輸入當地金額" class="w-full p-3 border border-gray-100 rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 font-bold shadow-sm" oninput="calcPoints()">
+                    <div id="twdEstimate" class="mt-1.5 text-[10px] text-gray-500 font-bold hidden bg-blue-50 p-1.5 rounded-lg border border-blue-100 tracking-wide text-center"></div>
+                </div>
+                <div>
+                    <label class="block text-gray-500 text-xs mb-2 font-bold">最優回饋率 / 哩程比</label>
+                    <input type="text" id="consumeRate" readonly placeholder="例如: 3%" class="w-full p-3 border border-gray-100 rounded-xl bg-gray-50 text-sm focus:outline-none text-gray-700 font-bold shadow-sm">
+                </div>
+            </div>
+            
+            <!-- 🌟 試算結果 -->
+            <div id="pointResult" class="text-center text-xl font-bold text-rose-600 py-4 bg-rose-50 rounded-xl mb-6 border border-rose-100 tracking-wide flex flex-col justify-center items-center min-h-[80px]">
+                預估回饋：0
+            </div>
+
+            <!-- 🚀 查無特店回報區塊 -->
+            <div class="border-t border-gray-100 pt-5 mt-2">
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-100 flex items-center justify-between">
+                    <div>
+                        <h4 class="text-sm font-bold text-blue-800 mb-1">查無特店？歡迎回報 🚀</h4>
+                        <p class="text-xs text-gray-500 font-bold">提供截圖，擴大資料庫</p>
+                    </div>
+                    <a href="https://forms.gle/xLTZqzGPGXib2zYj6" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 px-4 rounded-lg shadow transition-colors whitespace-nowrap">
+                        提供截圖
+                    </a>
+                </div>
+            </div>
+
+            <div class="text-center mt-6">
+                <a href="https://fongarea.com" target="_blank" class="text-xs text-gray-400 hover:text-blue-500 font-bold transition-colors">&copy; 2026 瘋哥的3c盒子</a>
+            </div>
         </div>
     </div>
 
+    <!-- ======================================================= -->
+    <!-- JS 邏輯區 (含終極防呆重複過濾器) -->
+    <!-- ======================================================= -->
     <script>
         let globalDatabase = {}; 
         let currentCountryData = []; 
@@ -373,7 +388,7 @@
                 searchMatch(val, item.name) && checkedMethods.includes(item.card)
             );
 
-            // 🛡️ 國內外全通路保底機制
+            // 🛡️ 國內外全通路保底機制 (每卡僅限產生一筆)
             const hasRichart = checkedMethods.some(m => m.includes('Richart') && !m.includes('台新Pay+'));
             const hasCube = checkedMethods.some(m => m.includes('CUBE'));
             const hasUnicard = checkedMethods.some(m => m.includes('玉山Unicard'));
@@ -382,37 +397,34 @@
             const hasDbs = checkedMethods.some(m => m.includes('星展'));
 
             if (currentCountry !== 'TW') {
-                if (hasRichart && !matchedList.some(m => m.card.includes('Richart') && m.plan === '玩旅刷')) {
-                    matchedList.push({ card: "台新Richart", name: `${val} (實體/線上通用)`, plan: "玩旅刷", type: 'cashback', rate: 0.033, isBaseline: true });
+                if (hasRichart && !matchedList.some(m => m.card.includes('Richart') && !m.card.includes('Pay+'))) {
+                    matchedList.push({ card: "台新Richart", name: `${val} (通用保底)`, plan: "玩旅刷", type: 'cashback', rate: 0.033, isBaseline: true });
                 }
-                if (hasCube && !matchedList.some(m => m.card.includes('CUBE') && m.plan === '趣旅行')) {
-                    matchedList.push({ card: "CUBE卡", name: `${val} (海外實體通用)`, plan: "趣旅行", type: 'cashback', rate: 0.03, isBaseline: true });
+                if (hasCube && !matchedList.some(m => m.card.includes('CUBE'))) {
+                    matchedList.push({ card: "CUBE卡", name: `${val} (通用保底)`, plan: "趣旅行", type: 'cashback', rate: 0.03, isBaseline: true });
                 }
-                if (hasUnicard) {
-                    matchedList = matchedList.filter(m => m.card !== '玉山Unicard');
-                    const uConf = unicardConfig[document.getElementById('unicardLevel') ? document.getElementById('unicardLevel').value : 'up'];
-                    matchedList.push({ card: "玉山Unicard", name: `${val} (海外實體通用)`, plan: uConf.name, type: 'cashback', rate: uConf.base + uConf.bonus, isBaseline: true });
+                if (hasUnicard && !matchedList.some(m => m.card.includes('玉山Unicard'))) {
+                    const uConf = unicardConfig[document.getElementById('unicardLevel').value];
+                    matchedList.push({ card: "玉山Unicard", name: `${val} (通用保底)`, plan: uConf.name, type: 'cashback', rate: uConf.base + uConf.bonus, isBaseline: true });
                 }
-                if (hasHsbc && !matchedList.some(m => m.card.includes('滙豐') && m.isBaseline)) {
-                    matchedList.push({ card: "滙豐旅人無限卡", name: `${val} (海外實體通用)`, plan: "海外消費", type: 'mileage', ratio: 10, unit: '哩', rate: MILEAGE_VALUATION/10, isBaseline: true });
-                    matchedList.push({ card: "滙豐旅人無限卡", name: `${val} (海外線上通用)`, plan: "海外消費", type: 'mileage', ratio: 10, unit: '哩', rate: MILEAGE_VALUATION/10, isBaseline: true });
+                if (hasHsbc && !matchedList.some(m => m.card.includes('滙豐'))) {
+                    matchedList.push({ card: "滙豐旅人無限卡", name: `${val} (通用保底)`, plan: "海外消費", type: 'mileage', ratio: 10, unit: '哩', rate: MILEAGE_VALUATION/10, isBaseline: true });
                 }
-                if (hasStarlux && !matchedList.some(m => m.card.includes('星宇') && m.isBaseline)) {
-                    matchedList.push({ card: "玉山星宇世界卡", name: `${val} (海外實體通用)`, plan: "海外消費", type: 'mileage', ratio: 10, unit: '哩', rate: MILEAGE_VALUATION/10, isBaseline: true });
-                    matchedList.push({ card: "玉山星宇世界卡", name: `${val} (生日月海外實體)`, plan: "專屬加碼", type: 'mileage', ratio: 5, unit: '哩', rate: MILEAGE_VALUATION/5, isBaseline: true });
+                if (hasStarlux && !matchedList.some(m => m.card.includes('星宇'))) {
+                    matchedList.push({ card: "玉山星宇世界卡", name: `${val} (通用保底)`, plan: "海外消費", type: 'mileage', ratio: 10, unit: '哩', rate: MILEAGE_VALUATION/10, isBaseline: true });
                 }
-                if (hasDbs && !matchedList.some(m => m.card.includes('星展') && m.isBaseline)) {
-                    matchedList.push({ card: "星展飛行世界之極卡", name: `${val} (海外實體通用)`, plan: "海外消費", type: 'mileage', ratio: 15, unit: '飛行基金', rate: MILEAGE_VALUATION/15, isBaseline: true });
+                if (hasDbs && !matchedList.some(m => m.card.includes('星展'))) {
+                    matchedList.push({ card: "星展飛行世界之極卡", name: `${val} (通用保底)`, plan: "海外消費", type: 'mileage', ratio: 15, unit: '飛行基金', rate: MILEAGE_VALUATION/15, isBaseline: true });
                 }
             } else {
-                if (hasHsbc && !matchedList.some(m => m.card.includes('滙豐') && m.isBaseline)) {
-                    matchedList.push({ card: "滙豐旅人無限卡", name: `${val} (國內實體通用)`, plan: "國內消費", type: 'mileage', ratio: 18, unit: '哩', rate: MILEAGE_VALUATION/18, isBaseline: true });
+                if (hasHsbc && !matchedList.some(m => m.card.includes('滙豐'))) {
+                    matchedList.push({ card: "滙豐旅人無限卡", name: `${val} (通用保底)`, plan: "國內消費", type: 'mileage', ratio: 18, unit: '哩', rate: MILEAGE_VALUATION/18, isBaseline: true });
                 }
-                if (hasStarlux && !matchedList.some(m => m.card.includes('星宇') && m.isBaseline)) {
-                    matchedList.push({ card: "玉山星宇世界卡", name: `${val} (國內實體通用)`, plan: "國內消費", type: 'mileage', ratio: 20, unit: '哩', rate: MILEAGE_VALUATION/20, isBaseline: true });
+                if (hasStarlux && !matchedList.some(m => m.card.includes('星宇'))) {
+                    matchedList.push({ card: "玉山星宇世界卡", name: `${val} (通用保底)`, plan: "國內消費", type: 'mileage', ratio: 20, unit: '哩', rate: MILEAGE_VALUATION/20, isBaseline: true });
                 }
-                if (hasDbs && !matchedList.some(m => m.card.includes('星展') && m.isBaseline)) {
-                    matchedList.push({ card: "星展飛行世界之極卡", name: `${val} (國內實體通用)`, plan: "國內消費", type: 'mileage', ratio: 18, unit: '飛行基金', rate: MILEAGE_VALUATION/18, isBaseline: true });
+                if (hasDbs && !matchedList.some(m => m.card.includes('星展'))) {
+                    matchedList.push({ card: "星展飛行世界之極卡", name: `${val} (通用保底)`, plan: "國內消費", type: 'mileage', ratio: 18, unit: '飛行基金', rate: MILEAGE_VALUATION/18, isBaseline: true });
                 }
             }
 
@@ -443,16 +455,16 @@
                     m.card = "玉山星宇" + sConf.name;
                     
                     if (currentCountry === 'TW') {
-                        if (m.name.includes('生日月')) return false; 
+                        if (m.name.includes('生日')) return false; 
                         m.ratio = sConf.tw;
                         m.plan = "國內消費";
                     } else {
                         if (isBday && sConf.birthdayOverseas !== null) {
                             m.ratio = sConf.birthdayOverseas;
                             m.plan = "🎂 生日月專屬加碼";
-                            m.name = m.name.replace('(海外實體通用)', '(海外實體生日)');
+                            if (m.isBaseline) m.name = m.name.replace('通用保底', '生日加碼');
                         } else {
-                            if (m.name.includes('生日月')) return false; 
+                            if (m.name.includes('生日')) return false; 
                             m.ratio = sConf.overseas;
                             m.plan = "海外消費";
                         }
@@ -461,6 +473,21 @@
                 }
                 return true;
             });
+
+            // 🛑 終極防呆：過濾掉同卡、同方案的重複顯示 (例如雙重輸入導致的重複)
+            const uniqueMap = new Map();
+            matchedList.forEach(m => {
+                let key = `${m.card}_${m.plan}_${m.rate}`;
+                if (!uniqueMap.has(key)) {
+                    uniqueMap.set(key, m);
+                } else {
+                    // 若有重複，保留真實特店名稱，捨棄保底名稱
+                    if (!m.isBaseline && uniqueMap.get(key).isBaseline) {
+                        uniqueMap.set(key, m);
+                    }
+                }
+            });
+            matchedList = Array.from(uniqueMap.values());
 
             matchedList.sort((a, b) => b.rate - a.rate);
 
