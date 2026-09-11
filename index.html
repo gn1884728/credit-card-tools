@@ -24,10 +24,10 @@
     
     <div class="w-full max-w-md bg-white rounded-[24px] shadow-lg overflow-hidden mb-8">
         
-        <!-- 🎨 專業級 App Header 區塊 -->
-        <div class="bg-blue-200 py-5 px-6 border-b border-blue-300">
-            <h2 class="text-[22px] font-black text-center text-gray-900 tracking-wide flex justify-center items-center">
-                <i class="fas fa-credit-card text-blue-600 mr-2 text-2xl"></i>信用卡切換速查
+        <!-- 🎨 專業級 App Header 區塊 (字體放大升級版) -->
+        <div class="bg-blue-200 py-6 px-6 border-b border-blue-300">
+            <h2 class="text-3xl font-black text-center text-gray-900 tracking-wide flex justify-center items-center">
+                <i class="fas fa-credit-card text-blue-600 mr-3 text-3xl"></i>信用卡切換速查
             </h2>
         </div>
 
@@ -42,18 +42,11 @@
                 </div>
             </div>
 
-            <!-- 🗂️ 動態折疊車庫 (Accordion) -->
+            <!-- 🗂️ 動態折疊車庫 (改名為 我的支付工具) -->
             <div class="mb-5">
-                <!-- 🌟 新增一鍵全選/全不選的群控按鈕 -->
-                <div class="flex justify-between items-center mb-3">
-                    <label class="text-gray-700 text-sm font-bold">我的支付車庫：</label>
-                    <div class="space-x-1.5 flex">
-                        <button onclick="toggleAllCards(true)" class="text-[11px] bg-blue-50 text-blue-700 border border-blue-200 px-2 py-1 rounded shadow-sm font-bold hover:bg-blue-100 transition-colors">全部勾選</button>
-                        <button onclick="toggleAllCards(false)" class="text-[11px] bg-gray-100 text-gray-600 border border-gray-200 px-2 py-1 rounded shadow-sm font-bold hover:bg-gray-200 transition-colors">全不勾選</button>
-                    </div>
-                </div>
+                <label class="block text-gray-700 text-[15px] font-bold mb-3">我的支付工具：</label>
                 <div id="garageContainer">
-                    <div class="text-center text-xs text-gray-400 py-4">載入支付車庫中...</div>
+                    <div class="text-center text-xs text-gray-400 py-4">載入支付工具中...</div>
                 </div>
             </div>
 
@@ -178,16 +171,6 @@
             searchStore();
         }
 
-        // 🌟 一鍵群控功能：全部勾選 / 全不勾選
-        window.toggleAllCards = function(isChecked) {
-            const checkboxes = document.querySelectorAll('#garageContainer input[type="checkbox"]');
-            checkboxes.forEach(cb => {
-                cb.checked = isChecked;
-            });
-            // 狀態變更後，觸發重新計算與搜尋
-            searchStore();
-        };
-
         function formatPaymentNameWithImage(method) {
             let imgFileName = null;
             let cssFallback = '<i class="fas fa-credit-card text-gray-400 text-sm mr-2 mt-0.5 flex-shrink-0" id="fallback-'+method+'"></i>';
@@ -260,6 +243,19 @@
             } else {
                 content.classList.add('hidden');
                 icon.style.transform = 'rotate(180deg)';
+            }
+        };
+
+        // 🌟 分類專用的群控按鈕函數
+        window.toggleCategoryCards = function(contentId, isChecked, event) {
+            // 防止點擊按鈕時觸發折疊展開功能
+            if(event) event.stopPropagation(); 
+            
+            const content = document.getElementById(contentId);
+            if(content) {
+                const checkboxes = content.querySelectorAll('input[type="checkbox"]');
+                checkboxes.forEach(cb => cb.checked = isChecked);
+                searchStore();
             }
         };
 
@@ -354,11 +350,19 @@
                     
                     finalHtml += `
                         <div class="mb-3 rounded-xl border ${cat.borderColor} overflow-hidden shadow-sm">
-                            <div class="flex justify-between items-center px-4 py-2.5 cursor-pointer ${cat.headerBg} hover:brightness-95 transition-all" onclick="toggleCategory('${contentId}', '${iconId}')">
-                                <h3 class="text-[13px] font-bold ${cat.textColor}">
-                                    ${cat.title} <span class="text-[11px] ml-1 font-normal opacity-70 border border-current px-1.5 py-0.5 rounded-full">${cat.items.length}</span>
-                                </h3>
-                                <i id="${iconId}" class="fas fa-chevron-up ${cat.textColor} transition-transform duration-300"></i>
+                            <div class="flex justify-between items-center px-4 py-2.5 ${cat.headerBg}">
+                                <!-- 點擊此區塊展開/收合 -->
+                                <div class="flex-1 flex items-center cursor-pointer select-none" onclick="toggleCategory('${contentId}', '${iconId}')">
+                                    <h3 class="text-[13px] font-bold ${cat.textColor}">
+                                        ${cat.title} <span class="text-[11px] ml-1 font-normal opacity-70 border border-current px-1.5 py-0.5 rounded-full">${cat.items.length}</span>
+                                    </h3>
+                                    <i id="${iconId}" class="fas fa-chevron-up ml-2 ${cat.textColor} transition-transform duration-300"></i>
+                                </div>
+                                <!-- 獨立分類的全選/全不選按鈕 -->
+                                <div class="flex space-x-1.5 ml-2">
+                                    <button onclick="toggleCategoryCards('${contentId}', true, event)" class="text-[10px] bg-white/80 hover:bg-white text-gray-700 border border-gray-300 px-2 py-1 rounded shadow-sm font-bold transition-colors">全選</button>
+                                    <button onclick="toggleCategoryCards('${contentId}', false, event)" class="text-[10px] bg-white/40 hover:bg-white text-gray-500 border border-gray-200 px-2 py-1 rounded shadow-sm font-bold transition-colors">全不選</button>
+                                </div>
                             </div>
                             <div id="${contentId}" class="grid grid-cols-1 md:grid-cols-2 gap-2 p-3 ${cat.contentBg} transition-all duration-300 origin-top">
                                 ${cat.items.join('')}
@@ -422,10 +426,9 @@
                 document.getElementById('consumeRate').value = '';
                 calcPoints();
                 
-                // 若輸入有值，但沒勾選卡片，顯示提示
                 if (val && checkedMethods.length === 0) {
                     resDiv.classList.remove('hidden'); 
-                    resDiv.innerHTML = `⚠️ 請先至少勾選一張卡片或支付方式。`; 
+                    resDiv.innerHTML = `⚠️ 請先至少勾選一項支付工具。`; 
                 }
                 return; 
             }
@@ -553,7 +556,7 @@
 
                                        let extraNote = rule ? ` ➔ ⚠️ 封頂提醒：${rule.desc}` : '';
                                        let badgeStyle = m.isBaseline ? 'text-indigo-600 bg-indigo-50 border-indigo-100' : 'text-rose-600 bg-rose-50 border-rose-100';
-                                       let badgeText = m.isBaseline ? `🛡️ 通用保底：${m.name}` : `📌 適用：${m.name}`;
+                                       let badgeText = m.isBaseline ? `🛡️ ${m.name}` : `📌 適用：${m.name}`;
 
                                        return `
                                        <div class="mb-3">
