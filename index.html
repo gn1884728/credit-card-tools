@@ -138,13 +138,13 @@
 
         // --- UI 美化：專屬 Logo 生成系統 ---
         function formatPaymentName(method) {
-            let icon = '<i class="fas fa-credit-card text-gray-400 text-sm mr-2 mt-0.5"></i>';
-            if (method.includes('CUBE')) icon = '<span class="bg-[#00a850] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm">CUBE</span>';
-            else if (method.includes('Richart')) icon = '<span class="bg-[#ff0033] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm">台新</span>';
-            else if (method.includes('玉山') || method.includes('Unicard')) icon = '<span class="bg-[#009e86] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm">玉山</span>';
-            else if (method.includes('PayPay')) icon = '<span class="bg-[#ff0033] text-white text-[9px] px-2 py-0.5 rounded-full font-black italic mr-2 mt-0.5 shadow-sm">PayPay</span>';
-            else if (method.includes('LINE Pay')) icon = '<i class="fab fa-line text-[#06C755] text-lg mr-2 mt-0.5"></i>';
-            else if (method.includes('TrueMoney')) icon = '<span class="bg-[#f26522] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm">True</span>';
+            let icon = '<i class="fas fa-credit-card text-gray-400 text-sm mr-2 mt-0.5 flex-shrink-0"></i>';
+            if (method.includes('CUBE')) icon = '<span class="bg-[#00a850] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">CUBE</span>';
+            else if (method.includes('Richart')) icon = '<span class="bg-[#ff0033] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">台新</span>';
+            else if (method.includes('玉山') || method.includes('Unicard')) icon = '<span class="bg-[#009e86] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">玉山</span>';
+            else if (method.includes('PayPay')) icon = '<span class="bg-[#FF0032] text-white text-[12px] w-5 h-5 flex items-center justify-center rounded-[5px] font-black italic mr-2 mt-0.5 shadow-sm flex-shrink-0">P</span>';
+            else if (method.includes('LINE Pay')) icon = '<i class="fab fa-line text-[#06C755] text-lg mr-2 mt-0.5 flex-shrink-0"></i>';
+            else if (method.includes('TrueMoney')) icon = '<span class="bg-[#f26522] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">True</span>';
 
             let mainName = method;
             let subName = '';
