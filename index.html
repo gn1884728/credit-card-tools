@@ -44,7 +44,14 @@
 
             <!-- 🗂️ 動態折疊車庫 (Accordion) -->
             <div class="mb-5">
-                <label class="block text-gray-700 text-sm font-bold mb-3">請勾選該區可用的支付/信用卡：</label>
+                <!-- 🌟 新增一鍵全選/全不選的群控按鈕 -->
+                <div class="flex justify-between items-center mb-3">
+                    <label class="text-gray-700 text-sm font-bold">我的支付車庫：</label>
+                    <div class="space-x-1.5 flex">
+                        <button onclick="toggleAllCards(true)" class="text-[11px] bg-blue-50 text-blue-700 border border-blue-200 px-2 py-1 rounded shadow-sm font-bold hover:bg-blue-100 transition-colors">全部勾選</button>
+                        <button onclick="toggleAllCards(false)" class="text-[11px] bg-gray-100 text-gray-600 border border-gray-200 px-2 py-1 rounded shadow-sm font-bold hover:bg-gray-200 transition-colors">全不勾選</button>
+                    </div>
+                </div>
                 <div id="garageContainer">
                     <div class="text-center text-xs text-gray-400 py-4">載入支付車庫中...</div>
                 </div>
@@ -99,7 +106,7 @@
     </div>
 
     <!-- ======================================================= -->
-    <!-- JS 邏輯區 (含手風琴折疊特效) -->
+    <!-- JS 邏輯區 -->
     <!-- ======================================================= -->
     <script>
         let globalDatabase = {}; 
@@ -171,6 +178,16 @@
             searchStore();
         }
 
+        // 🌟 一鍵群控功能：全部勾選 / 全不勾選
+        window.toggleAllCards = function(isChecked) {
+            const checkboxes = document.querySelectorAll('#garageContainer input[type="checkbox"]');
+            checkboxes.forEach(cb => {
+                cb.checked = isChecked;
+            });
+            // 狀態變更後，觸發重新計算與搜尋
+            searchStore();
+        };
+
         function formatPaymentNameWithImage(method) {
             let imgFileName = null;
             let cssFallback = '<i class="fas fa-credit-card text-gray-400 text-sm mr-2 mt-0.5 flex-shrink-0" id="fallback-'+method+'"></i>';
@@ -234,7 +251,6 @@
             searchStore();
         };
 
-        // 🌟 展開/收合手風琴功能的 JS 函數
         window.toggleCategory = function(contentId, iconId) {
             const content = document.getElementById(contentId);
             const icon = document.getElementById(iconId);
@@ -299,7 +315,6 @@
                 </div>`;
         }
 
-        // 🎯 渲染手風琴介面 (Accordion UI)
         function renderDynamicUI(countryCode) {
             const countryObj = globalDatabase[countryCode] || {};
             const paymentMethods = Object.keys(countryObj);
@@ -401,9 +416,17 @@
             const resDiv = document.getElementById('storeResult');
             const checkedMethods = Array.from(document.querySelectorAll('#garageContainer input:checked')).map(cb => cb.value);
 
-            if (!val) { 
+            if (!val || checkedMethods.length === 0) { 
                 resDiv.classList.add('hidden'); 
                 window.currentBestMatch = null;
+                document.getElementById('consumeRate').value = '';
+                calcPoints();
+                
+                // 若輸入有值，但沒勾選卡片，顯示提示
+                if (val && checkedMethods.length === 0) {
+                    resDiv.classList.remove('hidden'); 
+                    resDiv.innerHTML = `⚠️ 請先至少勾選一張卡片或支付方式。`; 
+                }
                 return; 
             }
 
@@ -411,7 +434,7 @@
                 searchMatch(val, item.name) && checkedMethods.includes(item.card)
             );
 
-            // 🛡️ 國內外全通路通用保底機制
+            // 🛡️ 國內外全通路保底機制
             const hasRichart = checkedMethods.some(m => m.includes('Richart') && !m.includes('台新Pay+'));
             const hasCube = checkedMethods.some(m => m.includes('CUBE'));
             const hasUnicard = checkedMethods.some(m => m.includes('玉山Unicard'));
@@ -497,6 +520,7 @@
                 return true;
             });
 
+            // 🛑 終極防呆過濾
             const uniqueMap = new Map();
             matchedList.forEach(m => {
                 let key = `${m.card}_${m.plan}_${m.rate}`;
