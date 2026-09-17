@@ -6,125 +6,185 @@
     <title>信用卡切換速查 | 瘋哥的3c盒子</title>
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link rel="apple-touch-icon" href="icon.png.png">
     <link rel="icon" type="image/png" href="icon.png.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { padding-bottom: env(safe-area-inset-bottom); background-color: #f3f4f6; }
+        body { background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         .text-truncate-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         img.fallback-icon { display: none; }
-        img.loaded { display: block; width: 36px; height: 24px; object-fit: cover; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); margin-right: 8px; margin-top: 2px; flex-shrink: 0; }
+        img.loaded { display: block; width: 32px; height: 20px; object-fit: cover; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); margin-right: 8px; flex-shrink: 0; }
+        
+        /* Bottom Sheet 動畫 */
+        .bottom-sheet { transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .bottom-sheet.show { transform: translateY(0); }
+        .backdrop { opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .backdrop.show { opacity: 1; pointer-events: auto; }
     </style>
 </head>
-<body class="min-h-screen font-sans flex justify-center items-start pt-6 px-4">
+<body class="min-h-screen flex justify-center items-start text-gray-800 pb-[env(safe-area-inset-bottom)]">
     
-    <div class="w-full max-w-md bg-white rounded-[24px] shadow-lg overflow-hidden mb-8">
+    <div class="w-full max-w-md bg-white min-h-screen relative shadow-2xl overflow-hidden flex flex-col">
         
-        <!-- 🎨 專業級 App Header 區塊 (字體放大升級版) -->
-        <div class="bg-blue-200 py-6 px-6 border-b border-blue-300">
-            <h2 class="text-3xl font-black text-center text-gray-900 tracking-wide flex justify-center items-center">
-                <i class="fas fa-credit-card text-blue-600 mr-3 text-3xl"></i>信用卡切換速查
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 pt-10 pb-6 px-6 shadow-md z-10 relative">
+            <h2 class="text-2xl font-black text-center text-white tracking-wide flex justify-center items-center">
+                <i class="fas fa-bolt text-yellow-300 mr-2"></i>刷卡速查 3.0
             </h2>
         </div>
 
-        <div class="p-6 pt-5">
-            <!-- 🌍 多國切換列 -->
-            <div class="mb-5">
-                <div class="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide" id="countrySelector">
-                    <button onclick="setCountry('TW', this)" class="country-btn flex-shrink-0 bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-bold shadow-md transition-all transform scale-105">🇹🇼 台灣</button>
-                    <button onclick="setCountry('JP', this)" class="country-btn flex-shrink-0 bg-white text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-bold shadow-sm hover:bg-gray-50 transition-all">🇯🇵 日本</button>
-                    <button onclick="setCountry('KR', this)" class="country-btn flex-shrink-0 bg-white text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-bold shadow-sm hover:bg-gray-50 transition-all">🇰🇷 韓國</button>
-                    <button onclick="setCountry('TH', this)" class="country-btn flex-shrink-0 bg-white text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-bold shadow-sm hover:bg-gray-50 transition-all">🇹🇭 泰國</button>
-                </div>
+        <div class="flex-1 overflow-y-auto px-5 py-6 pb-24 scrollbar-hide">
+            
+            <!-- 國家切換 (Pill 樣式) -->
+            <div class="mb-6 flex space-x-2 overflow-x-auto pb-1 scrollbar-hide" id="countrySelector">
+                <button onclick="setCountry('TW', this)" class="country-btn flex-1 bg-blue-600 text-white px-4 py-2.5 rounded-full text-sm font-bold shadow-md transition-all">🇹🇼 台灣</button>
+                <button onclick="setCountry('JP', this)" class="country-btn flex-1 bg-gray-100 text-gray-500 px-4 py-2.5 rounded-full text-sm font-bold transition-all hover:bg-gray-200">🇯🇵 日本</button>
+                <button onclick="setCountry('KR', this)" class="country-btn flex-1 bg-gray-100 text-gray-500 px-4 py-2.5 rounded-full text-sm font-bold transition-all hover:bg-gray-200">🇰🇷 韓國</button>
+                <button onclick="setCountry('TH', this)" class="country-btn flex-1 bg-gray-100 text-gray-500 px-4 py-2.5 rounded-full text-sm font-bold transition-all hover:bg-gray-200">🇹🇭 泰國</button>
             </div>
 
-            <!-- 🗂️ 動態折疊車庫 (改名為 我的支付工具) -->
-            <div class="mb-5">
-                <label class="block text-gray-700 text-[15px] font-bold mb-3">我的支付工具：</label>
-                <div id="garageContainer">
-                    <div class="text-center text-xs text-gray-400 py-4">載入支付工具中...</div>
-                </div>
-            </div>
-
-            <!-- 🔍 搜尋店名 -->
-            <div class="mb-5 relative">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <i class="fas fa-search text-gray-400"></i>
-                </div>
-                <input type="text" id="storeSearch" oninput="searchStore()" placeholder="輸入店名速查..." class="w-full pl-9 pr-4 py-3 border border-gray-100 rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 font-bold shadow-sm transition-colors">
-            </div>
-            
-            <!-- 搜尋結果顯示區 -->
-            <div id="storeResult" class="p-4 bg-blue-50 rounded-xl mb-5 text-sm font-bold text-blue-800 hidden border border-blue-100"></div>
-            
-            <!-- 💰 消費金額與回饋率 -->
-            <div class="grid grid-cols-2 gap-4 mb-6">
-                <div>
-                    <label class="block text-blue-800 text-xs mb-2 font-bold" id="amtLabel">消費金額 (台幣 TWD)</label>
-                    <input type="number" id="consumeAmt" placeholder="輸入當地金額" class="w-full p-3 border border-gray-100 rounded-xl bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 font-bold shadow-sm" oninput="calcPoints()">
-                    <div id="twdEstimate" class="mt-1.5 text-[10px] text-gray-500 font-bold hidden bg-blue-50 p-1.5 rounded-lg border border-blue-100 tracking-wide text-center"></div>
-                </div>
-                <div>
-                    <label class="block text-gray-500 text-xs mb-2 font-bold">最優回饋率 / 哩程比</label>
-                    <input type="text" id="consumeRate" readonly placeholder="例如: 3%" class="w-full p-3 border border-gray-100 rounded-xl bg-gray-50 text-sm focus:outline-none text-gray-700 font-bold shadow-sm">
-                </div>
-            </div>
-            
-            <!-- 🌟 試算結果 -->
-            <div id="pointResult" class="text-center text-xl font-bold text-rose-600 py-4 bg-rose-50 rounded-xl mb-6 border border-rose-100 tracking-wide flex flex-col justify-center items-center min-h-[80px]">
-                預估回饋：0
-            </div>
-
-            <!-- 🚀 查無特店回報區塊 -->
-            <div class="border-t border-gray-100 pt-5 mt-2">
-                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-100 flex items-center justify-between">
-                    <div>
-                        <h4 class="text-sm font-bold text-blue-800 mb-1">查無特店？歡迎回報 🚀</h4>
-                        <p class="text-xs text-gray-500 font-bold">提供截圖，擴大資料庫</p>
+            <!-- 輸入區塊 -->
+            <div class="bg-gray-50 p-4 rounded-[20px] mb-6 border border-gray-100 shadow-sm">
+                <!-- 消費金額 -->
+                <div class="mb-4">
+                    <label class="flex justify-between items-end mb-2">
+                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider" id="amtLabel">消費金額 (TWD)</span>
+                        <span id="twdEstimate" class="text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-md hidden"></span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span class="text-gray-400 font-bold" id="currencySymbol">$</span>
+                        </div>
+                        <input type="number" id="consumeAmt" placeholder="輸入當地金額..." class="w-full pl-8 pr-4 py-3.5 rounded-xl border-none bg-white text-lg focus:ring-2 focus:ring-blue-500 text-gray-800 font-black shadow-sm" oninput="executeSearch()">
                     </div>
-                    <a href="https://forms.gle/xLTZqzGPGXib2zYj6" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 px-4 rounded-lg shadow transition-colors whitespace-nowrap">
-                        提供截圖
-                    </a>
+                </div>
+
+                <!-- 搜尋店名 -->
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">消費通路</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-search text-gray-400"></i>
+                        </div>
+                        <input type="text" id="storeSearch" oninput="executeSearch()" placeholder="輸入店名、平台或飯店..." class="w-full pl-9 pr-4 py-3 border-none rounded-xl bg-white text-[15px] focus:ring-2 focus:ring-blue-500 text-gray-800 font-bold shadow-sm">
+                    </div>
                 </div>
             </div>
 
-            <div class="text-center mt-6">
-                <a href="https://fongarea.com" target="_blank" class="text-xs text-gray-400 hover:text-blue-500 font-bold transition-colors">&copy; 2026 瘋哥的3c盒子</a>
+            <!-- 呼叫支付組合按鈕 (呼叫 Bottom Sheet) -->
+            <button onclick="togglePaymentModal(true)" class="w-full mb-6 bg-white border border-gray-200 hover:border-blue-300 p-3.5 rounded-[16px] shadow-sm flex items-center justify-between transition-colors">
+                <div class="flex items-center">
+                    <div class="bg-indigo-100 text-indigo-600 w-8 h-8 rounded-full flex items-center justify-center mr-3">
+                        <i class="fas fa-wallet text-sm"></i>
+                    </div>
+                    <div class="text-left">
+                        <div class="text-xs text-gray-500 font-bold">我的支付組合</div>
+                        <div class="text-sm font-black text-gray-800" id="activeToolsSummary">載入中...</div>
+                    </div>
+                </div>
+                <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
+            </button>
+            
+            <!-- 結果顯示區 -->
+            <div id="resultsArea" class="hidden opacity-0 transition-opacity duration-300">
+                <div class="flex items-center mb-3">
+                    <h3 class="text-sm font-black text-gray-800 flex-1">🏆 最佳推薦</h3>
+                    <span class="text-[10px] text-gray-400 font-bold" id="matchCountBadge"></span>
+                </div>
+                
+                <!-- 冠軍卡片 -->
+                <div id="championCard" class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-[20px] p-5 shadow-md mb-4 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-blue-500 rounded-full mix-blend-multiply filter blur-2xl opacity-10 transform translate-x-1/2 -translate-y-1/2"></div>
+                    <!-- 內容由 JS 動態注入 -->
+                </div>
+
+                <!-- 備案清單 -->
+                <div id="otherOptionsArea" class="hidden">
+                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 ml-1">其他適用備案</h4>
+                    <div id="otherOptionsList" class="space-y-2">
+                        <!-- 內容由 JS 動態注入 -->
+                    </div>
+                </div>
             </div>
+
+            <!-- 無結果提示 -->
+            <div id="noResultPrompt" class="hidden text-center py-8">
+                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-ghost text-2xl text-gray-300"></i>
+                </div>
+                <p class="text-gray-500 font-bold text-sm mb-1">找不到符合的方案</p>
+                <p class="text-xs text-gray-400">請嘗試更改關鍵字，或檢查支付組合。</p>
+            </div>
+
+            <!-- 首頁待命狀態 -->
+            <div id="idleState" class="text-center py-10 opacity-60">
+                <i class="fas fa-credit-card text-4xl text-gray-200 mb-3"></i>
+                <p class="text-sm text-gray-400 font-bold">輸入金額與店名，立即精算最佳回饋</p>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 背景遮罩 -->
+    <div id="backdrop" class="backdrop fixed inset-0 bg-black/60 z-40" onclick="togglePaymentModal(false)"></div>
+
+    <!-- Bottom Sheet (支付組合抽屜) -->
+    <div id="paymentModal" class="bottom-sheet fixed inset-x-0 bottom-0 z-50 bg-gray-50 rounded-t-[28px] shadow-[0_-10px_40px_rgba(0,0,0,0.2)] max-h-[85vh] flex flex-col max-w-md mx-auto">
+        <div class="flex-shrink-0 flex justify-center pt-3 pb-2 w-full touch-none" onclick="togglePaymentModal(false)">
+            <div class="w-12 h-1.5 bg-gray-300 rounded-full"></div>
+        </div>
+        <div class="flex justify-between items-center px-6 pb-4 border-b border-gray-200">
+            <h3 class="text-lg font-black text-gray-800">設定支付組合</h3>
+            <button onclick="togglePaymentModal(false)" class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-300">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-5 scrollbar-hide">
+            <div id="garageContainer" class="space-y-4">
+                <div class="text-center text-xs text-gray-400 py-10">載入工具中...</div>
+            </div>
+        </div>
+        <div class="p-5 bg-white border-t border-gray-100 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
+            <button onclick="togglePaymentModal(false)" class="w-full bg-blue-600 text-white font-black py-3.5 rounded-xl shadow-lg hover:bg-blue-700 transition-colors">
+                確認組合
+            </button>
         </div>
     </div>
 
     <!-- ======================================================= -->
-    <!-- JS 邏輯區 -->
+    <!-- JS 邏輯區 (最強大腦保持完整) -->
     <!-- ======================================================= -->
     <script>
         let globalDatabase = {}; 
         let currentCountryData = []; 
-        window.currentBestMatch = null;
         let currentCountry = 'TW'; 
         
         const MILEAGE_VALUATION = 0.5; 
-        let fxRates = { TWD: 1, JPY: 4.5, KRW: 42.0, THB: 1.05 }; 
+        const IHG_PT_VALUATION = 0.15; 
+        
+        let fxRates = { TWD: 1, JPY: 4.5, KRW: 42.0, THB: 1.05, USD: 0.03125 }; 
         const countryCurrencyMap = {
-            'TW': { code: 'TWD', name: '台幣' },
-            'JP': { code: 'JPY', name: '日圓' },
-            'KR': { code: 'KRW', name: '韓元' },
-            'TH': { code: 'THB', name: '泰銖' }
+            'TW': { code: 'TWD', name: '台幣', sym: 'NT$' },
+            'JP': { code: 'JPY', name: '日圓', sym: '¥' },
+            'KR': { code: 'KRW', name: '韓元', sym: '₩' },
+            'TH': { code: 'THB', name: '泰銖', sym: '฿' }
         };
 
+        // 載入匯率
         fetch('https://api.exchangerate-api.com/v4/latest/TWD')
             .then(response => response.json())
             .then(data => { if (data && data.rates) fxRates = data.rates; })
             .catch(error => console.error("匯率載入失敗", error));
         
+        // 特殊卡別規則
         const unicardConfig = {
-            'simple': { name: '簡單選', base: 0.01, bonus: 0.02, capAmt: 50000, desc: "最高刷5萬拿滿2%加碼" },
-            'any': { name: '任意選', base: 0.01, bonus: 0.025, capAmt: 40000, desc: "最高刷4萬拿滿2.5%加碼" },
-            'up': { name: 'UP選', base: 0.01, bonus: 0.035, capAmt: 142857, desc: "最高刷14.2萬拿滿3.5%加碼" }
+            'simple': { name: '簡單選', base: 0.01, bonus: 0.02, capAmt: 50000, desc: "最高刷5萬拿滿加碼" },
+            'any': { name: '任意選', base: 0.01, bonus: 0.025, capAmt: 40000, desc: "最高刷4萬拿滿加碼" },
+            'up': { name: 'UP選', base: 0.01, bonus: 0.035, capAmt: 142857, desc: "最高刷14.2萬拿滿加碼" }
         };
 
         const hsbcConfig = {
@@ -139,36 +199,72 @@
             'titanium': { name: '鈦金卡', tw: 28, overseas: 20, birthdayOverseas: null }
         };
 
+        // 載入資料庫
         fetch('cube_config.json')
             .then(response => response.json())
-            .then(data => { globalDatabase = data; renderDynamicUI('TW'); })
+            .then(data => { 
+                globalDatabase = data; 
+                
+                // 動態寫入 IHG
+                const ihgEntry = {
+                    "全球飯店": [
+                        {"name":"洲際酒店 (InterContinental)", "type":"ihg"},
+                        {"name":"智選假日 (Holiday Inn Express)", "type":"ihg"},
+                        {"name":"皇冠假日 (Crowne Plaza)", "type":"ihg"},
+                        {"name":"voco", "type":"ihg"},
+                        {"name":"金普頓 (Kimpton)", "type":"ihg"},
+                        {"name":"IHG", "type":"ihg"}
+                    ]
+                };
+                ['TW', 'JP', 'KR', 'TH'].forEach(country => {
+                    if(!globalDatabase[country]) globalDatabase[country] = {};
+                    globalDatabase[country]["IHG 優悅會"] = ihgEntry;
+                });
+
+                renderDynamicUI('TW'); 
+                updateActiveCount();
+            })
             .catch(error => console.error('無法載入資料庫:', error));
 
         const countryPlaceholders = {
-            'TW': '輸入店名速查 (例如：麥當勞、星巴克)...',
-            'JP': '輸入店名速查 (例如：松本清、唐吉訶德)...',
-            'KR': '輸入店名速查 (例如：樂天免稅店)...',
-            'TH': '輸入店名速查 (例如：泰國 7-11)...'
+            'TW': '輸入全聯、高鐵、星巴克...',
+            'JP': '輸入唐吉訶德、大國藥妝...',
+            'KR': '輸入 CU、Olive Young...',
+            'TH': '輸入 7-11、Big C...'
         };
 
         function setCountry(code, btn) {
             currentCountry = code;
             document.querySelectorAll('.country-btn').forEach(b => {
-                b.className = 'country-btn flex-shrink-0 bg-white text-gray-500 border border-gray-200 px-5 py-2 rounded-full text-sm font-bold shadow-sm hover:bg-gray-50 transition-all';
+                b.className = 'country-btn flex-1 bg-gray-100 text-gray-500 px-4 py-2.5 rounded-full text-sm font-bold transition-all hover:bg-gray-200';
             });
-            btn.className = 'country-btn flex-shrink-0 bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-bold shadow-md transition-all transform scale-105';
+            btn.className = 'country-btn flex-1 bg-blue-600 text-white px-4 py-2.5 rounded-full text-sm font-bold shadow-md transition-all';
             
             document.getElementById('storeSearch').placeholder = countryPlaceholders[code];
             document.getElementById('storeSearch').value = '';
+            document.getElementById('consumeAmt').value = '';
             
             let curr = countryCurrencyMap[code];
-            document.getElementById('amtLabel').innerText = `消費金額 (${curr.name} ${curr.code})`;
-            document.getElementById('consumeAmt').value = '';
+            document.getElementById('amtLabel').innerText = `消費金額 (${curr.code})`;
+            document.getElementById('currencySymbol').innerText = curr.sym;
             document.getElementById('twdEstimate').classList.add('hidden');
-            document.getElementById('pointResult').innerHTML = `預估回饋：0`;
             
             renderDynamicUI(code);
-            searchStore();
+            executeSearch();
+        }
+
+        function togglePaymentModal(show) {
+            const modal = document.getElementById('paymentModal');
+            const backdrop = document.getElementById('backdrop');
+            if(show) {
+                modal.classList.add('show');
+                backdrop.classList.add('show');
+            } else {
+                modal.classList.remove('show');
+                backdrop.classList.remove('show');
+                updateActiveCount();
+                executeSearch(); // 關閉抽屜時重新計算
+            }
         }
 
         function formatPaymentNameWithImage(method) {
@@ -180,22 +276,11 @@
             else if (method.includes('滙豐') || method.includes('旅人')) imgFileName = 'hsbc.png';
             else if (method.includes('CUBE')) imgFileName = 'cube.png';
             else if (method.includes('玉山Unicard')) imgFileName = 'unicard.png';
-            else if (method.includes('PayPay')) imgFileName = 'paypay.png';
             
-            if (method.includes('PayPay')) cssFallback = '<span class="bg-[#FF0032] text-white text-[14px] w-[24px] h-[24px] flex items-center justify-center rounded-[6px] font-black italic mr-2 shadow-sm flex-shrink-0">P</span>';
-            else if (method.includes('全盈Pay')) cssFallback = '<span class="bg-[#00B1EB] text-white text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">全盈</span>';
-            else if (method.includes('全支付')) cssFallback = '<span class="bg-[#FF6B00] text-white text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">全支付</span>';
-            else if (method.includes('iPass Money')) cssFallback = '<span class="bg-[#008985] text-white text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">iPass</span>';
-            else if (method.includes('街口支付')) cssFallback = '<span class="bg-[#E4002B] text-white text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">街口</span>';
-            else if (method.includes('台新Pay+')) cssFallback = '<span class="bg-[#E60012] text-white text-[10px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">台新Pay+</span>';
-            else if (method.includes('玉山星宇')) cssFallback = '<span class="bg-[#8E8B82] text-white border border-[#5A5853] text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0 flex items-center"><i class="fas fa-plane text-[8px] mr-1"></i>星宇</span>';
-            else if (method.includes('星展飛行')) cssFallback = '<span class="bg-black text-white border border-gray-600 text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0 flex items-center"><span class="text-white mr-0.5 font-sans font-normal">X</span>星展</span>';
-            else if (method.includes('滙豐') || method.includes('旅人')) cssFallback = '<span class="bg-gradient-to-r from-[#1E2B2A] to-[#3A4A49] text-white border border-[#859897] text-[9px] px-1.5 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0 flex items-center">HSBC 旅人</span>';
-            else if (method.includes('玉山') || method.includes('Unicard')) cssFallback = '<span class="bg-[#009e86] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">玉山</span>';
-            else if (method.includes('CUBE')) cssFallback = '<span class="bg-[#00a850] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">CUBE</span>';
-            else if (method.includes('Richart')) cssFallback = '<span class="bg-[#ff0033] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">台新</span>';
+            if (method.includes('PayPay')) cssFallback = '<span class="bg-[#FF0032] text-white text-[12px] w-[20px] h-[20px] flex items-center justify-center rounded-[6px] font-black italic mr-2 shadow-sm flex-shrink-0">P</span>';
+            else if (method.includes('全盈Pay')) cssFallback = '<span class="bg-[#00B1EB] text-white text-[8px] px-1 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">全盈</span>';
             else if (method.includes('LINE Pay')) cssFallback = '<i class="fab fa-line text-[#06C755] text-lg mr-2 mt-0.5 flex-shrink-0"></i>';
-            else if (method.includes('TrueMoney')) cssFallback = '<span class="bg-[#f26522] text-white text-[9px] px-1.5 py-0.5 rounded-sm font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">True</span>';
+            else if (method.includes('IHG')) cssFallback = '<span class="bg-gradient-to-r from-orange-500 to-amber-600 text-white border border-amber-700 text-[8px] px-1 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">IHG</span>';
 
             let mainName = method, subName = '';
             if (method.includes('(') && method.includes(')')) {
@@ -213,8 +298,8 @@
                     ${imgTag}
                     <div style="${imgFileName ? 'display:none;' : 'display:flex;'}">${cssFallback}</div>
                     <div class="flex flex-col flex-1 overflow-hidden ml-1">
-                        <span class="font-bold text-[13px] text-gray-800 truncate">${mainName}</span>
-                        ${subName ? `<span class="text-[9px] text-gray-400 font-normal leading-tight text-truncate-2 mt-0.5">${subName}</span>` : ''}
+                        <span class="font-bold text-[13px] text-gray-800 truncate leading-tight">${mainName}</span>
+                        ${subName ? `<span class="text-[9px] text-gray-400 font-normal leading-tight mt-0.5">${subName}</span>` : ''}
                     </div>
                 </div>
             `;
@@ -224,38 +309,20 @@
             const level = document.getElementById('starluxLevel').value;
             const bdayDiv = document.getElementById('starluxBirthdayDiv');
             const bdayCheck = document.getElementById('starluxBirthdayCheck');
-            
             if (level === 'titanium') {
                 bdayDiv.classList.add('hidden');
                 if (bdayCheck) bdayCheck.checked = false;
             } else {
                 if (bdayDiv) bdayDiv.classList.remove('hidden');
             }
-            searchStore();
         };
 
-        window.toggleCategory = function(contentId, iconId) {
-            const content = document.getElementById(contentId);
-            const icon = document.getElementById(iconId);
-            if (content.classList.contains('hidden')) {
-                content.classList.remove('hidden');
-                icon.style.transform = 'rotate(0deg)';
-            } else {
-                content.classList.add('hidden');
-                icon.style.transform = 'rotate(180deg)';
-            }
-        };
-
-        // 🌟 分類專用的群控按鈕函數
         window.toggleCategoryCards = function(contentId, isChecked, event) {
-            // 防止點擊按鈕時觸發折疊展開功能
             if(event) event.stopPropagation(); 
-            
             const content = document.getElementById(contentId);
             if(content) {
                 const checkboxes = content.querySelectorAll('input[type="checkbox"]');
                 checkboxes.forEach(cb => cb.checked = isChecked);
-                searchStore();
             }
         };
 
@@ -264,24 +331,24 @@
             if (method.includes('玉山Unicard')) {
                 extraDropdown = `
                     <div class="mt-2.5 pt-2.5 border-t border-gray-100">
-                        <select id="unicardLevel" class="w-full text-[11px] border border-emerald-200 rounded-md p-1.5 bg-emerald-50 text-emerald-800 font-bold focus:outline-none" onchange="searchStore()">
-                            <option value="up" selected>🏆 UP選 (最高4.5%)</option>
-                            <option value="any">🎯 任意選 (最高3.5%)</option>
-                            <option value="simple">🔰 簡單選 (最高3%)</option>
+                        <select id="unicardLevel" class="w-full text-[11px] border-none rounded-md py-1.5 bg-emerald-50/50 text-emerald-700 font-bold focus:ring-0">
+                            <option value="up" selected>🏆 UP選 (4.5%)</option>
+                            <option value="any">🎯 任意選 (3.5%)</option>
+                            <option value="simple">🔰 簡單選 (3%)</option>
                         </select>
                     </div>`;
             } else if (method.includes('全盈Pay')) {
                 extraDropdown = `
                     <div class="mt-2.5 pt-2.5 border-t border-gray-100">
-                        <select id="pluspayLevel" class="w-full text-[11px] border border-blue-200 rounded-md p-1.5 bg-blue-50 text-blue-800 font-bold focus:outline-none" onchange="searchStore()">
-                            <option value="old" selected>👤 舊戶 (最高18.5%)</option>
-                            <option value="new">🌟 新戶 (最高28.5%)</option>
+                        <select id="pluspayLevel" class="w-full text-[11px] border-none rounded-md py-1.5 bg-blue-50/50 text-blue-700 font-bold focus:ring-0">
+                            <option value="old" selected>👤 舊戶</option>
+                            <option value="new">🌟 新戶</option>
                         </select>
                     </div>`;
             } else if (method.includes('滙豐') || method.includes('旅人')) {
                 extraDropdown = `
                     <div class="mt-2.5 pt-2.5 border-t border-gray-100">
-                        <select id="hsbcLevel" class="w-full text-[11px] border border-gray-300 rounded-md p-1.5 bg-gray-50 text-gray-800 font-bold focus:outline-none" onchange="searchStore()">
+                        <select id="hsbcLevel" class="w-full text-[11px] border-none rounded-md py-1.5 bg-gray-50 text-gray-700 font-bold focus:ring-0">
                             <option value="infinite" selected>💳 旅人無限卡</option>
                             <option value="signature">💳 旅人御璽卡</option>
                             <option value="light">💳 旅人輕旅卡</option>
@@ -290,21 +357,36 @@
             } else if (method.includes('玉山星宇')) {
                 extraDropdown = `
                     <div class="mt-2.5 pt-2.5 border-t border-gray-100">
-                        <select id="starluxLevel" class="w-full text-[11px] border border-yellow-200 rounded-md p-1.5 bg-yellow-50 text-yellow-800 font-bold focus:outline-none mb-2" onchange="toggleStarluxBirthday()">
+                        <select id="starluxLevel" class="w-full text-[11px] border-none rounded-md py-1.5 bg-yellow-50/50 text-yellow-700 font-bold focus:ring-0 mb-1.5" onchange="toggleStarluxBirthday()">
                             <option value="world" selected>✈️ 世界卡</option>
                             <option value="business">✈️ 商務鈦金卡</option>
                             <option value="titanium">✈️ 鈦金卡</option>
                         </select>
-                        <div id="starluxBirthdayDiv" class="flex items-center mt-1 ml-1 ${currentCountry === 'TW' ? 'hidden' : ''}">
-                            <input type="checkbox" id="starluxBirthdayCheck" class="w-3 h-3 text-yellow-600 rounded border-gray-300 focus:ring-yellow-500 mr-1.5" onchange="searchStore()">
+                        <div id="starluxBirthdayDiv" class="flex items-center ml-1 ${currentCountry === 'TW' ? 'hidden' : ''}">
+                            <input type="checkbox" id="starluxBirthdayCheck" class="w-3 h-3 text-yellow-600 rounded border-gray-300 mr-1.5">
                             <label for="starluxBirthdayCheck" class="text-[10px] text-gray-500 font-bold cursor-pointer">🎂 剛好是生日月</label>
                         </div>
                     </div>`;
+            } else if (method.includes('IHG')) {
+                extraDropdown = `
+                    <div class="mt-2.5 pt-2.5 border-t border-amber-100/50">
+                        <select id="ihgElite" class="w-full text-[11px] border-none rounded-md py-1.5 bg-amber-50/50 text-amber-700 font-bold focus:ring-0 mb-1.5">
+                            <option value="1.0" selected>💎 鑽石卡</option>
+                            <option value="0.6">🥇 白金卡</option>
+                            <option value="0.4">🥈 金卡</option>
+                            <option value="0">👤 俱樂部會員</option>
+                        </select>
+                        <select id="ihgPromo" class="w-full text-[11px] border-none rounded-md py-1.5 bg-amber-50/50 text-amber-700 font-bold focus:ring-0">
+                            <option value="3" selected>🔥 3x 積分促銷</option>
+                            <option value="2">🔥 2x 積分促銷</option>
+                            <option value="1">無活動</option>
+                        </select>
+                    </div>`;
             }
             return `
-                <div class="flex flex-col bg-white/80 p-2.5 rounded-lg border border-gray-200 shadow-sm hover:border-blue-400 transition-colors w-full">
+                <div class="flex flex-col bg-white p-3 rounded-[14px] border border-gray-100 shadow-sm w-full">
                     <label class="flex items-center cursor-pointer w-full">
-                        <input type="checkbox" value="${method}" checked class="w-4 h-4 text-blue-600 rounded border-gray-300 mr-2 flex-shrink-0" onchange="searchStore()">
+                        <input type="checkbox" value="${method}" checked class="tool-checkbox w-4 h-4 text-blue-600 rounded border-gray-300 mr-2.5 flex-shrink-0 focus:ring-blue-500">
                         ${formatPaymentNameWithImage(method)}
                     </label>
                     ${extraDropdown}
@@ -317,26 +399,25 @@
             const container = document.getElementById('garageContainer');
             
             if (paymentMethods.length === 0) {
-                container.innerHTML = `<div class="text-xs text-rose-500 p-3 bg-rose-50 rounded-xl border border-rose-100 text-center">目前該區尚無資料</div>`;
+                container.innerHTML = `<div class="text-xs text-rose-500 p-3 text-center font-bold">該區尚無資料</div>`;
                 return;
             }
 
             let categories = {
-                mobile: { title: '📱 行動支付', items: [], headerBg: 'bg-blue-100', contentBg: 'bg-blue-50/50', borderColor: 'border-blue-200', textColor: 'text-blue-800' },
-                mileage: { title: '✈️ 航空哩程卡', items: [], headerBg: 'bg-slate-200', contentBg: 'bg-slate-50/50', borderColor: 'border-slate-300', textColor: 'text-slate-800' },
-                cashback: { title: '💰 點數 / 現金回饋', items: [], headerBg: 'bg-emerald-100', contentBg: 'bg-emerald-50/50', borderColor: 'border-emerald-200', textColor: 'text-emerald-800' }
+                mobile: { title: '📱 支付工具', items: [] },
+                mileage: { title: '✈️ 航空哩程卡', items: [] },
+                hotel: { title: '🏨 飯店計畫', items: [] },
+                cashback: { title: '💰 信用卡回饋', items: [] }
             };
 
             paymentMethods.forEach(method => {
                 let htmlBlock = buildCheckboxBlock(method);
                 let isMileage = false;
                 for (const plan in countryObj[method]) {
-                    if (countryObj[method][plan].some(store => store.type === 'mileage')) {
-                        isMileage = true;
-                        break;
-                    }
+                    if (countryObj[method][plan].some(store => store.type === 'mileage')) { isMileage = true; break; }
                 }
-                if (isMileage) categories.mileage.items.push(htmlBlock);
+                if (method.includes('IHG')) categories.hotel.items.push(htmlBlock);
+                else if (isMileage) categories.mileage.items.push(htmlBlock);
                 else if (/Pay|支付|Wallet|iPass|街口|TrueMoney/i.test(method)) categories.mobile.items.push(htmlBlock);
                 else categories.cashback.items.push(htmlBlock);
             });
@@ -346,25 +427,16 @@
                 let cat = categories[catKey];
                 if (cat.items.length > 0) {
                     let contentId = `cat-content-${catKey}`;
-                    let iconId = `cat-icon-${catKey}`;
-                    
                     finalHtml += `
-                        <div class="mb-3 rounded-xl border ${cat.borderColor} overflow-hidden shadow-sm">
-                            <div class="flex justify-between items-center px-4 py-2.5 ${cat.headerBg}">
-                                <!-- 點擊此區塊展開/收合 -->
-                                <div class="flex-1 flex items-center cursor-pointer select-none" onclick="toggleCategory('${contentId}', '${iconId}')">
-                                    <h3 class="text-[13px] font-bold ${cat.textColor}">
-                                        ${cat.title} <span class="text-[11px] ml-1 font-normal opacity-70 border border-current px-1.5 py-0.5 rounded-full">${cat.items.length}</span>
-                                    </h3>
-                                    <i id="${iconId}" class="fas fa-chevron-up ml-2 ${cat.textColor} transition-transform duration-300"></i>
-                                </div>
-                                <!-- 獨立分類的全選/全不選按鈕 -->
-                                <div class="flex space-x-1.5 ml-2">
-                                    <button onclick="toggleCategoryCards('${contentId}', true, event)" class="text-[10px] bg-white/80 hover:bg-white text-gray-700 border border-gray-300 px-2 py-1 rounded shadow-sm font-bold transition-colors">全選</button>
-                                    <button onclick="toggleCategoryCards('${contentId}', false, event)" class="text-[10px] bg-white/40 hover:bg-white text-gray-500 border border-gray-200 px-2 py-1 rounded shadow-sm font-bold transition-colors">全不選</button>
+                        <div class="mb-4">
+                            <div class="flex justify-between items-center mb-2 px-1">
+                                <h3 class="text-[13px] font-black text-gray-700">${cat.title}</h3>
+                                <div class="flex space-x-2">
+                                    <button onclick="toggleCategoryCards('${contentId}', true, event)" class="text-[10px] text-blue-600 font-bold">全選</button>
+                                    <button onclick="toggleCategoryCards('${contentId}', false, event)" class="text-[10px] text-gray-400 font-bold">清空</button>
                                 </div>
                             </div>
-                            <div id="${contentId}" class="grid grid-cols-1 md:grid-cols-2 gap-2 p-3 ${cat.contentBg} transition-all duration-300 origin-top">
+                            <div id="${contentId}" class="grid grid-cols-2 gap-2">
                                 ${cat.items.join('')}
                             </div>
                         </div>
@@ -380,6 +452,7 @@
                 else bdayDiv.classList.remove('hidden');
             }
 
+            // 建立 Data Pool
             currentCountryData = [];
             for (const method in countryObj) {
                 for (const plan in countryObj[method]) {
@@ -390,6 +463,9 @@
                             baseItem.ratio = store.ratio;
                             baseItem.unit = store.unit;
                             baseItem.rate = MILEAGE_VALUATION / store.ratio; 
+                        } else if (store.type === 'ihg') {
+                            baseItem.type = 'ihg';
+                            baseItem.rate = 0; 
                         } else {
                             baseItem.type = 'cashback';
                             baseItem.rate = store.rate;
@@ -400,10 +476,25 @@
             }
         }
 
+        function updateActiveCount() {
+            const checkboxes = document.querySelectorAll('.tool-checkbox');
+            let activeCards = 0, activeWallets = 0;
+            checkboxes.forEach(cb => {
+                if(cb.checked) {
+                    if(/Pay|支付|Wallet|iPass|街口|TrueMoney/i.test(cb.value)) activeWallets++;
+                    else activeCards++;
+                }
+            });
+            let txt = [];
+            if(activeCards > 0) txt.push(`${activeCards} 張卡片`);
+            if(activeWallets > 0) txt.push(`${activeWallets} 款支付`);
+            document.getElementById('activeToolsSummary').innerText = txt.length > 0 ? txt.join(' · ') : '未選取任何工具';
+        }
+
         function getPromoRule(item) {
             if (!item) return null;
-            if (item.name.includes('麥當勞APP點餐')) return { base: 0.03, bonus: 0.075, capAmt: 1066, desc: "最高刷 $1,066 拿滿 7.5% 額外加碼" };
-            if (item.name.includes('星巴克儲值')) return { base: 0.03, bonus: 0.02, capAmt: 5000, desc: "最高刷 $5,000 拿滿 2% 額外加碼" };
+            if (item.name.includes('麥當勞APP點餐')) return { base: 0.03, bonus: 0.075, capAmt: 1066, desc: "最高刷 $1,066 拿滿加碼" };
+            if (item.name.includes('星巴克儲值')) return { base: 0.03, bonus: 0.02, capAmt: 5000, desc: "最高刷 $5,000 拿滿加碼" };
             if (item.card === '玉山Unicard') {
                 const uLevel = document.getElementById('unicardLevel') ? document.getElementById('unicardLevel').value : 'up';
                 return unicardConfig[uLevel];
@@ -415,228 +506,211 @@
             return val.trim().toLowerCase().split(/\s+/).every(kw => name.toLowerCase().includes(kw));
         }
 
-        function searchStore() {
+        function executeSearch() {
             const val = document.getElementById('storeSearch').value.trim(); 
-            const resDiv = document.getElementById('storeResult');
-            const checkedMethods = Array.from(document.querySelectorAll('#garageContainer input:checked')).map(cb => cb.value);
+            const rawAmt = parseFloat(document.getElementById('consumeAmt').value) || 0;
+            const resArea = document.getElementById('resultsArea');
+            const idleState = document.getElementById('idleState');
+            const noResult = document.getElementById('noResultPrompt');
+            const estDiv = document.getElementById('twdEstimate');
+            
+            // 處理匯率換算顯示
+            let twdAmt = rawAmt;
+            const currCode = countryCurrencyMap[currentCountry].code;
+            if (currentCountry !== 'TW' && fxRates[currCode] && rawAmt > 0) {
+                twdAmt = rawAmt / fxRates[currCode];
+                estDiv.innerText = `≈ NT$ ${Math.round(twdAmt).toLocaleString()}`;
+                estDiv.classList.remove('hidden');
+            } else {
+                estDiv.classList.add('hidden');
+            }
+
+            const checkedMethods = Array.from(document.querySelectorAll('.tool-checkbox:checked')).map(cb => cb.value);
 
             if (!val || checkedMethods.length === 0) { 
-                resDiv.classList.add('hidden'); 
-                window.currentBestMatch = null;
-                document.getElementById('consumeRate').value = '';
-                calcPoints();
-                
-                if (val && checkedMethods.length === 0) {
-                    resDiv.classList.remove('hidden'); 
-                    resDiv.innerHTML = `⚠️ 請先至少勾選一項支付工具。`; 
-                }
+                resArea.classList.add('hidden');
+                noResult.classList.add('hidden');
+                idleState.classList.remove('hidden');
+                resArea.classList.remove('opacity-100');
                 return; 
             }
+
+            idleState.classList.add('hidden');
 
             let matchedList = currentCountryData.filter(item => 
                 searchMatch(val, item.name) && checkedMethods.includes(item.card)
             );
 
-            // 🛡️ 國內外全通路保底機制
-            const hasRichart = checkedMethods.some(m => m.includes('Richart') && !m.includes('台新Pay+'));
+            // 通用保底機制 (簡化)
             const hasCube = checkedMethods.some(m => m.includes('CUBE'));
             const hasUnicard = checkedMethods.some(m => m.includes('玉山Unicard'));
             const hasHsbc = checkedMethods.some(m => m.includes('滙豐'));
-            const hasStarlux = checkedMethods.some(m => m.includes('星宇'));
-            const hasDbs = checkedMethods.some(m => m.includes('星展'));
 
             if (currentCountry !== 'TW') {
-                if (hasRichart && !matchedList.some(m => m.card.includes('Richart') && !m.card.includes('Pay+'))) {
-                    matchedList.push({ card: "台新Richart", name: `${val} (通用保底)`, plan: "玩旅刷", type: 'cashback', rate: 0.033, isBaseline: true });
-                }
-                if (hasCube && !matchedList.some(m => m.card.includes('CUBE'))) {
-                    matchedList.push({ card: "CUBE卡", name: `${val} (通用保底)`, plan: "趣旅行", type: 'cashback', rate: 0.03, isBaseline: true });
-                }
+                if (hasCube && !matchedList.some(m => m.card.includes('CUBE'))) matchedList.push({ card: "CUBE卡", name: `${val} (海外通用)`, plan: "趣旅行", type: 'cashback', rate: 0.03, isBaseline: true });
                 if (hasUnicard && !matchedList.some(m => m.card.includes('玉山Unicard'))) {
                     const uConf = unicardConfig[document.getElementById('unicardLevel').value];
-                    matchedList.push({ card: "玉山Unicard", name: `${val} (通用保底)`, plan: uConf.name, type: 'cashback', rate: uConf.base + uConf.bonus, isBaseline: true });
+                    matchedList.push({ card: "玉山Unicard", name: `${val} (海外通用)`, plan: uConf.name, type: 'cashback', rate: uConf.base + uConf.bonus, isBaseline: true });
                 }
-                if (hasHsbc && !matchedList.some(m => m.card.includes('滙豐'))) {
-                    matchedList.push({ card: "滙豐旅人無限卡", name: `${val} (通用保底)`, plan: "海外消費", type: 'mileage', ratio: 10, unit: '哩', rate: MILEAGE_VALUATION/10, isBaseline: true });
-                }
-                if (hasStarlux && !matchedList.some(m => m.card.includes('星宇'))) {
-                    matchedList.push({ card: "玉山星宇世界卡", name: `${val} (通用保底)`, plan: "海外消費", type: 'mileage', ratio: 10, unit: '哩', rate: MILEAGE_VALUATION/10, isBaseline: true });
-                }
-                if (hasDbs && !matchedList.some(m => m.card.includes('星展'))) {
-                    matchedList.push({ card: "星展飛行世界之極卡", name: `${val} (通用保底)`, plan: "海外消費", type: 'mileage', ratio: 15, unit: '飛行基金', rate: MILEAGE_VALUATION/15, isBaseline: true });
-                }
+                if (hasHsbc && !matchedList.some(m => m.card.includes('滙豐'))) matchedList.push({ card: "滙豐旅人卡", name: `${val} (海外通用)`, plan: "海外消費", type: 'mileage', ratio: 10, unit: '哩', rate: MILEAGE_VALUATION/10, isBaseline: true });
             } else {
-                if (hasHsbc && !matchedList.some(m => m.card.includes('滙豐'))) {
-                    matchedList.push({ card: "滙豐旅人無限卡", name: `${val} (通用保底)`, plan: "國內消費", type: 'mileage', ratio: 18, unit: '哩', rate: MILEAGE_VALUATION/18, isBaseline: true });
-                }
-                if (hasStarlux && !matchedList.some(m => m.card.includes('星宇'))) {
-                    matchedList.push({ card: "玉山星宇世界卡", name: `${val} (通用保底)`, plan: "國內消費", type: 'mileage', ratio: 20, unit: '哩', rate: MILEAGE_VALUATION/20, isBaseline: true });
-                }
-                if (hasDbs && !matchedList.some(m => m.card.includes('星展'))) {
-                    matchedList.push({ card: "星展飛行世界之極卡", name: `${val} (通用保底)`, plan: "國內消費", type: 'mileage', ratio: 18, unit: '飛行基金', rate: MILEAGE_VALUATION/18, isBaseline: true });
-                }
+                if (hasHsbc && !matchedList.some(m => m.card.includes('滙豐'))) matchedList.push({ card: "滙豐旅人卡", name: `${val} (國內通用)`, plan: "國內消費", type: 'mileage', ratio: 18, unit: '哩', rate: MILEAGE_VALUATION/18, isBaseline: true });
             }
 
-            // 🎯 動態覆蓋引擎
+            // 參數動態計算
             matchedList = matchedList.filter(m => {
                 if (m.card === '玉山Unicard') {
                     const uConf = unicardConfig[document.getElementById('unicardLevel').value];
                     m.rate = uConf.base + uConf.bonus; 
                     m.plan = uConf.name; 
                 } 
-                else if (m.card.includes('全盈Pay')) {
-                    const pLevel = document.getElementById('pluspayLevel').value;
-                    m.rate = pLevel === 'old' ? 0.185 : 0.285;
-                    m.plan = pLevel === 'old' ? "綁玉山數位/郵局 (舊戶)" : "綁玉山數位/郵局 (限新戶)";
-                }
                 else if (m.card.includes('滙豐')) {
-                    const hLevel = document.getElementById('hsbcLevel').value;
-                    const hConf = hsbcConfig[hLevel];
+                    const hConf = hsbcConfig[document.getElementById('hsbcLevel').value];
                     m.card = hConf.name;
                     m.ratio = currentCountry === 'TW' ? hConf.tw : hConf.overseas;
                     m.rate = MILEAGE_VALUATION / m.ratio;
                 }
-                else if (m.card.includes('星宇')) {
-                    const sLevel = document.getElementById('starluxLevel').value;
-                    const sConf = starluxConfig[sLevel];
-                    const isBday = document.getElementById('starluxBirthdayCheck') ? document.getElementById('starluxBirthdayCheck').checked : false;
-                    
-                    m.card = "玉山星宇" + sConf.name;
-                    
-                    if (currentCountry === 'TW') {
-                        if (m.name.includes('生日')) return false; 
-                        m.ratio = sConf.tw;
-                        m.plan = "國內消費";
-                    } else {
-                        if (isBday && sConf.birthdayOverseas !== null) {
-                            m.ratio = sConf.birthdayOverseas;
-                            m.plan = "🎂 生日月專屬加碼";
-                            if (m.isBaseline) m.name = m.name.replace('通用保底', '生日加碼');
-                        } else {
-                            if (m.name.includes('生日')) return false; 
-                            m.ratio = sConf.overseas;
-                            m.plan = "海外消費";
-                        }
-                    }
-                    m.rate = MILEAGE_VALUATION / m.ratio;
+                else if (m.card.includes('IHG')) {
+                    const elite = parseFloat(document.getElementById('ihgElite').value);
+                    const promo = parseInt(document.getElementById('ihgPromo').value);
+                    const multiplier = 1 + elite + (promo - 1);
+                    m.rate = 0.3125 * multiplier * IHG_PT_VALUATION;
+                    m.plan = `積分疊加 (${multiplier}x)`;
                 }
                 return true;
             });
 
-            // 🛑 終極防呆過濾
+            // 排序與去重
             const uniqueMap = new Map();
             matchedList.forEach(m => {
                 let key = `${m.card}_${m.plan}_${m.rate}`;
-                if (!uniqueMap.has(key)) {
-                    uniqueMap.set(key, m);
-                } else {
-                    if (!m.isBaseline && uniqueMap.get(key).isBaseline) {
-                        uniqueMap.set(key, m);
-                    }
-                }
+                if (!uniqueMap.has(key) || (!m.isBaseline && uniqueMap.get(key).isBaseline)) uniqueMap.set(key, m);
             });
-            matchedList = Array.from(uniqueMap.values());
-
-            matchedList.sort((a, b) => b.rate - a.rate);
+            matchedList = Array.from(uniqueMap.values()).sort((a, b) => b.rate - a.rate);
 
             if (matchedList.length > 0) {
-                resDiv.classList.remove('hidden'); 
-                window.currentBestMatch = matchedList[0];
+                noResult.classList.add('hidden');
+                resArea.classList.remove('hidden');
+                setTimeout(() => resArea.classList.add('opacity-100'), 50); // Fade in
                 
-                resDiv.innerHTML = `✅ 找到 ${matchedList.length} 個適用方案 (已為您排序)：<br><br>` + 
-                                   matchedList.map(m => {
-                                       let rule = getPromoRule(m); 
-                                       
-                                       let rateDisplay = '';
-                                       if (m.type === 'mileage') {
-                                           rateDisplay = `(${m.ratio}元/${m.unit})`;
-                                       } else {
-                                           rateDisplay = rule ? `(${Number((rule.base * 100).toFixed(2))}% + ${Number((rule.bonus * 100).toFixed(2))}%)` : `(${Number((m.rate * 100).toFixed(2))}%)`;
-                                       }
-
-                                       let extraNote = rule ? ` ➔ ⚠️ 封頂提醒：${rule.desc}` : '';
-                                       let badgeStyle = m.isBaseline ? 'text-indigo-600 bg-indigo-50 border-indigo-100' : 'text-rose-600 bg-rose-50 border-rose-100';
-                                       let badgeText = m.isBaseline ? `🛡️ ${m.name}` : `📌 適用：${m.name}`;
-
-                                       return `
-                                       <div class="mb-3">
-                                           &bull; <b>[${m.card.replace(/ \(.+\)/, '')}]</b> ➔ 建議切換 <b>【${m.plan}】</b> <span class="font-bold text-rose-600">${rateDisplay}</span><br>
-                                           <span class="ml-4 mt-1 inline-block text-[11px] font-bold ${badgeStyle} px-2 py-0.5 rounded border">${badgeText}${extraNote}</span>
-                                       </div>
-                                       `;
-                                   }).join('');
+                document.getElementById('matchCountBadge').innerText = `共 ${matchedList.length} 個方案`;
                 
-                let topM = window.currentBestMatch;
-                if (topM.type === 'mileage') {
-                    document.getElementById('consumeRate').value = `${topM.ratio} 元/${topM.unit}`;
+                // 渲染冠軍卡片
+                renderChampionCard(matchedList[0], twdAmt);
+
+                // 渲染其他備案
+                const otherList = document.getElementById('otherOptionsList');
+                if (matchedList.length > 1) {
+                    document.getElementById('otherOptionsArea').classList.remove('hidden');
+                    otherList.innerHTML = matchedList.slice(1, 4).map(m => renderSmallCard(m, twdAmt)).join('');
                 } else {
-                    let topRule = getPromoRule(topM);
-                    document.getElementById('consumeRate').value = topRule ? `${topRule.base * 100} + ${topRule.bonus * 100}%` : `${Number((topM.rate * 100).toFixed(2))}%`; 
+                    document.getElementById('otherOptionsArea').classList.add('hidden');
                 }
-                
-                calcPoints();
-            } else { 
-                resDiv.classList.remove('hidden'); 
-                resDiv.innerHTML = `⚠️ 未找到符合通路。`; 
-                document.getElementById('consumeRate').value = '';
-                window.currentBestMatch = null;
-                calcPoints();
+
+            } else {
+                resArea.classList.add('hidden');
+                resArea.classList.remove('opacity-100');
+                noResult.classList.remove('hidden');
             }
         }
 
-        function calcPoints() {
-            const rawInputAmt = parseFloat(document.getElementById('consumeAmt').value) || 0; 
-            const estDiv = document.getElementById('twdEstimate');
-            const match = window.currentBestMatch;
+        // 渲染冠軍卡片 (Champion Card)
+        function renderChampionCard(m, twdAmt) {
+            const card = document.getElementById('championCard');
+            let rule = getPromoRule(m); 
             
-            if (!match) return;
+            // 標頭與方案名稱
+            let badgeStyle = m.isBaseline ? 'bg-indigo-100 text-indigo-700 border-indigo-200' : 'bg-rose-100 text-rose-700 border-rose-200';
+            let badgeText = m.isBaseline ? `通用保底` : `精準適用`;
+            if (m.type === 'ihg') badgeStyle = 'bg-amber-100 text-amber-800 border-amber-200';
 
-            let twdAmt = rawInputAmt;
-            const currCode = countryCurrencyMap[currentCountry].code;
-            
-            if (currentCountry !== 'TW' && fxRates[currCode]) {
-                twdAmt = rawInputAmt / fxRates[currCode];
-                if (rawInputAmt > 0) {
-                    let displayRate = (1 / fxRates[currCode]).toFixed(4); 
-                    estDiv.innerHTML = `即時換算：約 <span class="text-blue-700">NT$ ${Math.round(twdAmt).toLocaleString()}</span> <span class="text-[9px] text-gray-400">(匯率 ${displayRate})</span>`;
-                    estDiv.classList.remove('hidden');
-                } else {
-                    estDiv.classList.add('hidden');
-                }
-            } else {
-                estDiv.classList.add('hidden');
-            }
-            
-            let resultHtml = '';
+            let mainRateHtml = '';
+            let returnValHtml = '';
+            let warningsHtml = '';
 
-            if (match.type === 'mileage') {
-                let miles = Math.floor(twdAmt / match.ratio); 
-                resultHtml = `預估回饋：${miles.toLocaleString()} ${match.unit}`;
-                if (currentCountry !== 'TW' && !match.card.includes('玉山Wallet')) {
-                    resultHtml += `<div class="text-[11px] text-gray-400 mt-2 font-normal">💡 海外實體交易可能產生 1.5% 手續費</div>`;
-                }
+            // 回饋數值計算與呈現
+            if (m.type === 'mileage') {
+                mainRateHtml = `${m.ratio}<span class="text-lg font-bold ml-1">元/${m.unit}</span>`;
+                if(twdAmt > 0) returnValHtml = `約 ${Math.floor(twdAmt / m.ratio).toLocaleString()} ${m.unit}`;
+                else returnValHtml = '輸入金額試算';
+            } 
+            else if (m.type === 'ihg') {
+                mainRateHtml = `<span class="text-xl">大約等值</span> ${Number((m.rate * 100).toFixed(1))}<span class="text-lg font-bold ml-1">%</span>`;
+                if(twdAmt > 0) {
+                    let usdAmt = twdAmt * (fxRates['USD'] || 0.03125);
+                    let basePts = Math.floor(usdAmt * 10);
+                    let elitePts = Math.floor(basePts * parseFloat(document.getElementById('ihgElite').value));
+                    let promoPts = Math.floor(basePts * (parseInt(document.getElementById('ihgPromo').value) - 1));
+                    returnValHtml = `${(basePts + elitePts + promoPts).toLocaleString()} 點積分`;
+                    warningsHtml += `<div class="mt-2 text-[10px] text-blue-700/70 font-bold bg-white/50 p-1.5 rounded inline-block">官方算法: 基礎${basePts} + 菁英${elitePts} + 活動${promoPts}</div>`;
+                } else returnValHtml = '輸入金額試算';
             } 
             else {
-                let totalReward = 0;
-                let isPromoCalc = false;
-                let rule = getPromoRule(match);
-
-                if (rule) {
-                    let baseReward = twdAmt * rule.base;
-                    let bonusReward = Math.min(twdAmt, rule.capAmt) * rule.bonus; 
-                    totalReward = baseReward + bonusReward;
-                    isPromoCalc = true;
-                } else {
-                    totalReward = twdAmt * match.rate;
-                }
-
-                resultHtml = `預估回饋：${Math.round(totalReward).toLocaleString()}`;
-                if (isPromoCalc && twdAmt > rule.capAmt) {
-                    resultHtml += `<div class="text-xs text-rose-500 mt-2 font-bold tracking-wide">⚠️ 已超過加碼上限，超出部分僅以基本 ${rule.base * 100}% 計算</div>`;
-                }
+                let displayRate = rule ? (rule.base + rule.bonus)*100 : m.rate * 100;
+                mainRateHtml = `${Number(displayRate.toFixed(2))}<span class="text-2xl font-bold ml-1">%</span>`;
+                if(twdAmt > 0) {
+                    let reward = rule ? (twdAmt * rule.base + Math.min(twdAmt, rule.capAmt) * rule.bonus) : twdAmt * m.rate;
+                    returnValHtml = `NT$ ${Math.round(reward).toLocaleString()}`;
+                    if(rule && twdAmt > rule.capAmt) warningsHtml += `<div class="mt-1.5 text-xs text-rose-500 font-bold"><i class="fas fa-exclamation-triangle mr-1"></i>已超過加碼上限</div>`;
+                } else returnValHtml = '輸入金額試算';
             }
-            
-            document.getElementById('pointResult').innerHTML = resultHtml;
+
+            if(rule) warningsHtml += `<div class="mt-1 text-xs text-indigo-700/80 font-bold"><i class="fas fa-info-circle mr-1"></i>封頂限制：${rule.desc}</div>`;
+
+            card.innerHTML = `
+                <div class="relative z-10 flex justify-between items-start mb-4">
+                    <div>
+                        <div class="text-[11px] font-bold ${badgeStyle} px-2 py-0.5 rounded border inline-block mb-1.5 shadow-sm">${badgeText} · ${m.name}</div>
+                        <h2 class="text-xl font-black text-gray-800 tracking-tight leading-tight">${m.card.replace(/ \(.+\)/, '')}</h2>
+                        <div class="text-sm font-bold text-blue-600 mt-0.5">切換至【${m.plan}】</div>
+                    </div>
+                </div>
+                
+                <div class="relative z-10 flex justify-between items-end border-t border-blue-100/50 pt-3">
+                    <div>
+                        <div class="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">最高回饋率</div>
+                        <div class="text-3xl font-black text-blue-700 leading-none">${mainRateHtml}</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">預估可得</div>
+                        <div class="text-lg font-black text-rose-600">${returnValHtml}</div>
+                    </div>
+                </div>
+                <div class="relative z-10">${warningsHtml}</div>
+            `;
+        }
+
+        // 渲染小型備案卡片
+        function renderSmallCard(m, twdAmt) {
+            let rateText = '', valText = '';
+            let rule = getPromoRule(m);
+
+            if (m.type === 'mileage') {
+                rateText = `${m.ratio}元/${m.unit}`;
+                valText = twdAmt > 0 ? `${Math.floor(twdAmt / m.ratio).toLocaleString()} ${m.unit}` : '-';
+            } else if (m.type === 'ihg') {
+                rateText = `約 ${Number((m.rate * 100).toFixed(1))}%`;
+                valText = twdAmt > 0 ? '見上方公式' : '-';
+            } else {
+                rateText = rule ? `${Number(((rule.base + rule.bonus)*100).toFixed(2))}%` : `${Number((m.rate * 100).toFixed(2))}%`;
+                if(twdAmt > 0) {
+                    let reward = rule ? (twdAmt * rule.base + Math.min(twdAmt, rule.capAmt) * rule.bonus) : twdAmt * m.rate;
+                    valText = `NT$ ${Math.round(reward).toLocaleString()}`;
+                } else valText = '-';
+            }
+
+            return `
+                <div class="bg-white p-3 rounded-xl border border-gray-100 flex justify-between items-center shadow-sm">
+                    <div>
+                        <div class="text-[13px] font-bold text-gray-800">${m.card.replace(/ \(.+\)/, '')} <span class="text-gray-400 text-[11px] ml-1 font-normal">${m.plan}</span></div>
+                        <div class="text-[10px] text-gray-400 font-bold">${m.name}</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-black text-blue-600">${rateText}</div>
+                        <div class="text-[10px] font-bold text-rose-500">${valText}</div>
+                    </div>
+                </div>
+            `;
         }
     </script>
 </body>
