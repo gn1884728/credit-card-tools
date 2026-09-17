@@ -527,15 +527,18 @@
 
             idleState.classList.add('hidden');
 
+            // 修正：只要勾選的卡片名稱包含在 checkedMethods 裡面，就允許進行通路比對
             let matchedList = currentCountryData.filter(item => 
                 searchMatch(val, item.name) && checkedMethods.includes(item.card)
             );
 
+            // 彈性尋找使用者的勾選清單
             const cubeMethod = checkedMethods.find(m => m.includes('CUBE'));
             const unicardMethod = checkedMethods.find(m => m.includes('Unicard'));
             const hsbcMethod = checkedMethods.find(m => m.includes('滙豐') || m.includes('旅人'));
             const richartMethod = checkedMethods.find(m => m.includes('台新') || m.includes('Richart'));
 
+            // 海外自動補上保底與通用機制
             if (currentCountry !== 'TW') {
                 if (cubeMethod && !matchedList.some(m => m.card === cubeMethod)) 
                     matchedList.push({ card: cubeMethod, name: `${val} (海外實體)`, plan: "趣旅行", type: 'cashback', rate: 0.03, isBaseline: true });
@@ -551,6 +554,7 @@
                     matchedList.push({ card: hsbcMethod, name: `${val} (國內通用)`, plan: "國內消費", type: 'mileage', ratio: 18, unit: '哩', rate: MILEAGE_VALUATION/18, isBaseline: true });
             }
 
+            // 台新 Richart 智慧判定
             if (richartMethod) {
                 matchedList = matchedList.filter(m => m.card !== richartMethod); 
                 const richartResult = getRichartMatch(val, currentCountry);
