@@ -486,8 +486,11 @@
             if (!item) return null;
             if (item.name.includes('麥當勞APP點餐')) return { base: 0.03, bonus: 0.075, capAmt: 1066, desc: "最高刷 $1,066 拿滿加碼" };
             if (item.name.includes('星巴克儲值')) return { base: 0.03, bonus: 0.02, capAmt: 5000, desc: "最高刷 $5,000 拿滿加碼" };
+            
+            // 安全防呆讀取 unicaldLevel select
             if (item.card.includes('Unicard')) {
-                const uLevel = document.getElementById('unicardLevel') ? document.getElementById('unicardLevel').value : 'up';
+                const uSel = document.getElementById('unicardLevel');
+                const uLevel = uSel ? uSel.value : 'up';
                 return unicardConfig[uLevel];
             }
             return null;
@@ -497,7 +500,19 @@
             return val.trim().toLowerCase().split(/\s+/).every(kw => name.toLowerCase().includes(kw));
         }
 
+        // 外層防呆包覆 (Catch Error 避免整頁崩潰)
         function executeSearch() {
+            try {
+                _executeSearch();
+            } catch (e) {
+                console.error('搜尋執行錯誤:', e);
+                document.getElementById('resultsArea').classList.add('hidden');
+                document.getElementById('idleState').classList.add('hidden');
+                document.getElementById('noResultPrompt').classList.remove('hidden');
+            }
+        }
+
+        function _executeSearch() {
             const val = document.getElementById('storeSearch').value.trim(); 
             const rawAmt = parseFloat(document.getElementById('consumeAmt').value) || 0;
             const resArea = document.getElementById('resultsArea');
@@ -527,24 +542,23 @@
 
             idleState.classList.add('hidden');
 
-            // 修正：只要勾選的卡片名稱包含在 checkedMethods 裡面，就允許進行通路比對
-            let matchedList = currentCountryData.filter(item => 
-                searchMatch(val, item.name) && checkedMethods.includes(item.card)
-            );
+            // 嚴格淺拷貝避免資料汙染 (Data Mutation 絕對防禦)
+            let matchedList = currentCountryData
+                .filter(item => searchMatch(val, item.name) && checkedMethods.includes(item.card))
+                .map(m => ({ ...m }));
 
-            // 彈性尋找使用者的勾選清單
             const cubeMethod = checkedMethods.find(m => m.includes('CUBE'));
             const unicardMethod = checkedMethods.find(m => m.includes('Unicard'));
             const hsbcMethod = checkedMethods.find(m => m.includes('滙豐') || m.includes('旅人'));
             const richartMethod = checkedMethods.find(m => m.includes('台新') || m.includes('Richart'));
 
-            // 海外自動補上保底與通用機制
             if (currentCountry !== 'TW') {
                 if (cubeMethod && !matchedList.some(m => m.card === cubeMethod)) 
                     matchedList.push({ card: cubeMethod, name: `${val} (海外實體)`, plan: "趣旅行", type: 'cashback', rate: 0.03, isBaseline: true });
                 
                 if (unicardMethod && !matchedList.some(m => m.card === unicardMethod)) {
-                    const uConf = unicardConfig[document.getElementById('unicardLevel').value];
+                    const uSel = document.getElementById('unicardLevel');
+                    const uConf = unicardConfig[uSel ? uSel.value : 'up'];
                     matchedList.push({ card: unicardMethod, name: `${val} (海外實體)`, plan: uConf.name, type: 'cashback', rate: uConf.base + uConf.bonus, isBaseline: true });
                 }
                 if (hsbcMethod && !matchedList.some(m => m.card === hsbcMethod)) 
@@ -554,7 +568,6 @@
                     matchedList.push({ card: hsbcMethod, name: `${val} (國內通用)`, plan: "國內消費", type: 'mileage', ratio: 18, unit: '哩', rate: MILEAGE_VALUATION/18, isBaseline: true });
             }
 
-            // 台新 Richart 智慧判定
             if (richartMethod) {
                 matchedList = matchedList.filter(m => m.card !== richartMethod); 
                 const richartResult = getRichartMatch(val, currentCountry);
@@ -569,19 +582,21 @@
                 });
             }
 
-            matchedList = matchedList.filter(m => {
+            matchedList = matchedList.map(m => {
                 if (m.card.includes('Unicard')) {
-                    const uConf = unicardConfig[document.getElementById('unicardLevel').value];
+                    const uSel = document.getElementById('unicardLevel');
+                    const uConf = unicardConfig[uSel ? uSel.value : 'up'];
                     m.rate = uConf.base + uConf.bonus; 
                     m.plan = uConf.name; 
                 } 
                 else if (m.card.includes('滙豐') || m.card.includes('旅人')) {
-                    const hConf = hsbcConfig[document.getElementById('hsbcLevel').value];
+                    const hSel = document.getElementById('hsbcLevel');
+                    const hConf = hsbcConfig[hSel ? hSel.value : 'infinite'];
                     m.card = hConf.name;
                     m.ratio = currentCountry === 'TW' ? hConf.tw : hConf.overseas;
-                    m.rate = MILEAGE_VALUATION / h.ratio;
+                    m.rate = MILEAGE_VALUATION / m.ratio; // 安全防呆：使用正確的 m.ratio
                 }
-                return true;
+                return m;
             });
 
             const uniqueMap = new Map();
