@@ -2,13 +2,25 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <!-- 解除縮放限制，提升無障礙體驗，保留瀏海適配 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    
+    <!-- SEO 與社群分享 (Open Graph) 標籤 -->
     <title>信用卡切換速查 | 瘋哥的3c盒子</title>
+    <meta name="description" content="輸入金額與店名，立即算出台灣、日本、韓國、泰國最佳刷卡回饋方案與預估點數。">
+    <meta property="og:title" content="信用卡切換速查 | 瘋哥的3c盒子">
+    <meta property="og:description" content="結帳前 3 秒必看！輸入金額與店名，立即精算最佳信用卡組合。">
+    <meta property="og:type" content="website">
+    
+    <!-- PWA 與 App 沉浸式設定 -->
+    <meta name="theme-color" content="#2563eb">
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <!-- 改為 black-translucent 讓狀態列與背景完美融合 -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="icon.png.png">
     <link rel="icon" type="image/png" href="icon.png.png">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -30,8 +42,8 @@
     
     <div class="w-full max-w-md bg-white min-h-screen relative shadow-2xl overflow-hidden flex flex-col">
         
-        <!-- Header -->
-        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 pt-10 pb-6 px-6 shadow-md z-10 relative">
+        <!-- Header (加入 iOS 瀏海安全距離 padding) -->
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 pt-[calc(env(safe-area-inset-top)+2.5rem)] pb-6 px-6 shadow-md z-10 relative">
             <h2 class="text-2xl font-black text-center text-white tracking-wide flex justify-center items-center">
                 <i class="fas fa-bolt text-yellow-300 mr-2"></i>刷卡速查
             </h2>
@@ -51,26 +63,30 @@
             <div class="bg-gray-50 p-4 rounded-[20px] mb-6 border border-gray-100 shadow-sm">
                 <!-- 消費金額 -->
                 <div class="mb-4">
-                    <label class="flex justify-between items-end mb-2">
-                        <span class="text-sm font-black text-gray-800 tracking-wide" id="amtLabel">消費金額 (TWD)</span>
+                    <div class="flex justify-between items-end mb-2">
+                        <!-- 綁定 for 屬性 -->
+                        <label for="consumeAmt" class="text-sm font-black text-gray-800 tracking-wide" id="amtLabel">消費金額 (TWD)</label>
                         <span id="twdEstimate" class="text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-md hidden"></span>
-                    </label>
+                    </div>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <span class="text-gray-400 font-bold" id="currencySymbol">$</span>
                         </div>
+                        <!-- text-lg (>16px) 防 iOS 放大 -->
                         <input type="number" id="consumeAmt" placeholder="輸入當地金額..." class="w-full pl-8 pr-4 py-3.5 rounded-xl border-none bg-white text-lg focus:ring-2 focus:ring-blue-500 text-gray-800 font-black shadow-sm" oninput="executeSearch()">
                     </div>
                 </div>
 
                 <!-- 搜尋店名 -->
                 <div>
-                    <label class="text-sm font-black text-gray-800 tracking-wide mb-2 block">消費通路</label>
+                    <!-- 綁定 for 屬性 -->
+                    <label for="storeSearch" class="text-sm font-black text-gray-800 tracking-wide mb-2 block">消費通路</label>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i class="fas fa-search text-gray-400"></i>
                         </div>
-                        <input type="text" id="storeSearch" oninput="executeSearch()" placeholder="輸入店名、平台或飯店..." class="w-full pl-9 pr-4 py-3 border-none rounded-xl bg-white text-[15px] focus:ring-2 focus:ring-blue-500 text-gray-800 font-bold shadow-sm">
+                        <!-- 將 text-[15px] 改為 text-base (16px) 防 iOS 放大 -->
+                        <input type="text" id="storeSearch" oninput="executeSearch()" placeholder="輸入店名、平台或飯店..." class="w-full pl-9 pr-4 py-3 border-none rounded-xl bg-white text-base focus:ring-2 focus:ring-blue-500 text-gray-800 font-bold shadow-sm">
                     </div>
                 </div>
             </div>
@@ -89,8 +105,8 @@
                 <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
             </button>
             
-            <!-- 結果顯示區 -->
-            <div id="resultsArea" class="hidden opacity-0 transition-opacity duration-300">
+            <!-- 結果顯示區 (加入 aria-live 支援螢幕閱讀器) -->
+            <div id="resultsArea" aria-live="polite" class="hidden opacity-0 transition-opacity duration-300">
                 <div class="flex items-center mb-3">
                     <h3 class="text-sm font-black text-gray-800 flex-1">🏆 最佳推薦</h3>
                     <span class="text-[10px] text-gray-400 font-bold" id="matchCountBadge"></span>
@@ -110,9 +126,9 @@
                     </div>
                 </div>
                 
-                <!-- 獨立出來的常駐回報按鈕 -->
+                <!-- 獨立出來的常駐回報按鈕 (已修正為 /viewform) -->
                 <div class="text-center pt-4 border-t border-gray-100">
-                    <a href="https://docs.google.com/forms/d/1AiTGI4nADYNYx1tbN2XcwMqbjziHDy4Vg1qKCJuCGYY/edit" target="_blank" class="inline-flex items-center justify-center text-gray-500 text-xs font-bold hover:text-blue-600 transition-colors">
+                    <a href="https://docs.google.com/forms/d/1AiTGI4nADYNYx1tbN2XcwMqbjziHDy4Vg1qKCJuCGYY/viewform" target="_blank" class="inline-flex items-center justify-center text-gray-500 text-xs font-bold hover:text-blue-600 transition-colors">
                         <i class="fas fa-comment-dots mr-1.5"></i>資料有誤或找不到店名？點此回報
                     </a>
                 </div>
@@ -126,8 +142,8 @@
                 <p class="text-gray-500 font-bold text-sm mb-1">找不到符合的方案</p>
                 <p class="text-xs text-gray-400 mb-6">請嘗試更改關鍵字，或檢查支付組合。</p>
                 
-                <!-- 無結果時也提供大顆的回報按鈕 -->
-                <a href="https://docs.google.com/forms/d/1AiTGI4nADYNYx1tbN2XcwMqbjziHDy4Vg1qKCJuCGYY/edit" target="_blank" class="inline-flex items-center justify-center bg-gray-800 text-white px-5 py-2.5 rounded-full text-xs font-bold shadow-md hover:bg-gray-700 transition-colors">
+                <!-- 無結果時也提供大顆的回報按鈕 (已修正為 /viewform) -->
+                <a href="https://docs.google.com/forms/d/1AiTGI4nADYNYx1tbN2XcwMqbjziHDy4Vg1qKCJuCGYY/viewform" target="_blank" class="inline-flex items-center justify-center bg-gray-800 text-white px-5 py-2.5 rounded-full text-xs font-bold shadow-md hover:bg-gray-700 transition-colors">
                     <i class="fas fa-comment-dots mr-2"></i>回報遺漏的店名給瘋哥
                 </a>
             </div>
@@ -157,7 +173,11 @@
         </div>
         <div class="flex-1 overflow-y-auto p-5 scrollbar-hide">
             <div id="garageContainer" class="space-y-4">
-                <div class="text-center text-xs text-gray-400 py-10">載入工具中...</div>
+                <!-- Skeleton 骨架屏載入提示 -->
+                <div class="text-center text-xs text-gray-400 py-10 animate-pulse">
+                    <i class="fas fa-spinner fa-spin text-xl mb-2 text-blue-500"></i><br>
+                    正在載入支付工具...
+                </div>
             </div>
         </div>
         <div class="p-5 bg-white border-t border-gray-100 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
