@@ -52,7 +52,7 @@
                 <!-- 消費金額 -->
                 <div class="mb-4">
                     <label class="flex justify-between items-end mb-2">
-                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider" id="amtLabel">消費金額 (TWD)</span>
+                        <span class="text-sm font-black text-gray-800 tracking-wide" id="amtLabel">消費金額 (TWD)</span>
                         <span id="twdEstimate" class="text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-md hidden"></span>
                     </label>
                     <div class="relative">
@@ -65,7 +65,7 @@
 
                 <!-- 搜尋店名 -->
                 <div>
-                    <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">消費通路</label>
+                    <label class="text-sm font-black text-gray-800 tracking-wide mb-2 block">消費通路</label>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i class="fas fa-search text-gray-400"></i>
@@ -103,25 +103,32 @@
                 </div>
 
                 <!-- 備案清單 -->
-                <div id="otherOptionsArea" class="hidden">
+                <div id="otherOptionsArea" class="hidden mb-6">
                     <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 ml-1">其他適用備案</h4>
                     <div id="otherOptionsList" class="space-y-2">
                         <!-- 內容由 JS 動態注入 -->
                     </div>
+                </div>
+                
+                <!-- 獨立出來的常駐回報按鈕 -->
+                <div class="text-center pt-4 border-t border-gray-100">
+                    <a href="https://docs.google.com/forms/d/1AiTGI4nADYNYx1tbN2XcwMqbjziHDy4Vg1qKCJuCGYY/edit" target="_blank" class="inline-flex items-center justify-center text-gray-500 text-xs font-bold hover:text-blue-600 transition-colors">
+                        <i class="fas fa-comment-dots mr-1.5"></i>資料有誤或找不到店名？點此回報
+                    </a>
                 </div>
             </div>
 
             <!-- 無結果提示 -->
             <div id="noResultPrompt" class="hidden text-center py-8">
                 <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <i class="fas fa-ghost text-2xl text-gray-300"></i>
+                    <i class="fas fa-search-minus text-2xl text-gray-300"></i>
                 </div>
                 <p class="text-gray-500 font-bold text-sm mb-1">找不到符合的方案</p>
-                <p class="text-xs text-gray-400 mb-5">請嘗試更改關鍵字，或檢查支付組合。</p>
+                <p class="text-xs text-gray-400 mb-6">請嘗試更改關鍵字，或檢查支付組合。</p>
                 
-                <!-- 加回的反饋回報按鈕 -->
+                <!-- 無結果時也提供大顆的回報按鈕 -->
                 <a href="https://docs.google.com/forms/d/1AiTGI4nADYNYx1tbN2XcwMqbjziHDy4Vg1qKCJuCGYY/edit" target="_blank" class="inline-flex items-center justify-center bg-gray-800 text-white px-5 py-2.5 rounded-full text-xs font-bold shadow-md hover:bg-gray-700 transition-colors">
-                    <i class="fas fa-comment-dots mr-2"></i>找不到店名？點此回報給我
+                    <i class="fas fa-comment-dots mr-2"></i>回報遺漏的店名給瘋哥
                 </a>
             </div>
 
