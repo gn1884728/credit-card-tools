@@ -33,7 +33,7 @@
         <!-- Header -->
         <div class="bg-gradient-to-r from-blue-600 to-indigo-700 pt-10 pb-6 px-6 shadow-md z-10 relative">
             <h2 class="text-2xl font-black text-center text-white tracking-wide flex justify-center items-center">
-                <i class="fas fa-bolt text-yellow-300 mr-2"></i>刷卡速查 3.0
+                <i class="fas fa-bolt text-yellow-300 mr-2"></i>刷卡速查
             </h2>
         </div>
 
@@ -164,7 +164,6 @@
         let currentCountry = 'TW'; 
         
         const MILEAGE_VALUATION = 0.5; 
-        const IHG_PT_VALUATION = 0.15; 
         
         let fxRates = { TWD: 1, JPY: 4.5, KRW: 42.0, THB: 1.05, USD: 0.03125 }; 
         const countryCurrencyMap = {
@@ -204,23 +203,6 @@
             .then(response => response.json())
             .then(data => { 
                 globalDatabase = data; 
-                
-                // 動態寫入 IHG
-                const ihgEntry = {
-                    "全球飯店": [
-                        {"name":"洲際酒店 (InterContinental)", "type":"ihg"},
-                        {"name":"智選假日 (Holiday Inn Express)", "type":"ihg"},
-                        {"name":"皇冠假日 (Crowne Plaza)", "type":"ihg"},
-                        {"name":"voco", "type":"ihg"},
-                        {"name":"金普頓 (Kimpton)", "type":"ihg"},
-                        {"name":"IHG", "type":"ihg"}
-                    ]
-                };
-                ['TW', 'JP', 'KR', 'TH'].forEach(country => {
-                    if(!globalDatabase[country]) globalDatabase[country] = {};
-                    globalDatabase[country]["IHG 優悅會"] = ihgEntry;
-                });
-
                 renderDynamicUI('TW'); 
                 updateActiveCount();
             })
@@ -280,7 +262,6 @@
             if (method.includes('PayPay')) cssFallback = '<span class="bg-[#FF0032] text-white text-[12px] w-[20px] h-[20px] flex items-center justify-center rounded-[6px] font-black italic mr-2 shadow-sm flex-shrink-0">P</span>';
             else if (method.includes('全盈Pay')) cssFallback = '<span class="bg-[#00B1EB] text-white text-[8px] px-1 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">全盈</span>';
             else if (method.includes('LINE Pay')) cssFallback = '<i class="fab fa-line text-[#06C755] text-lg mr-2 mt-0.5 flex-shrink-0"></i>';
-            else if (method.includes('IHG')) cssFallback = '<span class="bg-gradient-to-r from-orange-500 to-amber-600 text-white border border-amber-700 text-[8px] px-1 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">IHG</span>';
 
             let mainName = method, subName = '';
             if (method.includes('(') && method.includes(')')) {
@@ -367,21 +348,6 @@
                             <label for="starluxBirthdayCheck" class="text-[10px] text-gray-500 font-bold cursor-pointer">🎂 剛好是生日月</label>
                         </div>
                     </div>`;
-            } else if (method.includes('IHG')) {
-                extraDropdown = `
-                    <div class="mt-2.5 pt-2.5 border-t border-amber-100/50">
-                        <select id="ihgElite" class="w-full text-[11px] border-none rounded-md py-1.5 bg-amber-50/50 text-amber-700 font-bold focus:ring-0 mb-1.5">
-                            <option value="1.0" selected>💎 鑽石卡</option>
-                            <option value="0.6">🥇 白金卡</option>
-                            <option value="0.4">🥈 金卡</option>
-                            <option value="0">👤 俱樂部會員</option>
-                        </select>
-                        <select id="ihgPromo" class="w-full text-[11px] border-none rounded-md py-1.5 bg-amber-50/50 text-amber-700 font-bold focus:ring-0">
-                            <option value="3" selected>🔥 3x 積分促銷</option>
-                            <option value="2">🔥 2x 積分促銷</option>
-                            <option value="1">無活動</option>
-                        </select>
-                    </div>`;
             }
             return `
                 <div class="flex flex-col bg-white p-3 rounded-[14px] border border-gray-100 shadow-sm w-full">
@@ -406,7 +372,6 @@
             let categories = {
                 mobile: { title: '📱 支付工具', items: [] },
                 mileage: { title: '✈️ 航空哩程卡', items: [] },
-                hotel: { title: '🏨 飯店計畫', items: [] },
                 cashback: { title: '💰 信用卡回饋', items: [] }
             };
 
@@ -416,8 +381,7 @@
                 for (const plan in countryObj[method]) {
                     if (countryObj[method][plan].some(store => store.type === 'mileage')) { isMileage = true; break; }
                 }
-                if (method.includes('IHG')) categories.hotel.items.push(htmlBlock);
-                else if (isMileage) categories.mileage.items.push(htmlBlock);
+                if (isMileage) categories.mileage.items.push(htmlBlock);
                 else if (/Pay|支付|Wallet|iPass|街口|TrueMoney/i.test(method)) categories.mobile.items.push(htmlBlock);
                 else categories.cashback.items.push(htmlBlock);
             });
@@ -463,9 +427,6 @@
                             baseItem.ratio = store.ratio;
                             baseItem.unit = store.unit;
                             baseItem.rate = MILEAGE_VALUATION / store.ratio; 
-                        } else if (store.type === 'ihg') {
-                            baseItem.type = 'ihg';
-                            baseItem.rate = 0; 
                         } else {
                             baseItem.type = 'cashback';
                             baseItem.rate = store.rate;
@@ -570,13 +531,6 @@
                     m.ratio = currentCountry === 'TW' ? hConf.tw : hConf.overseas;
                     m.rate = MILEAGE_VALUATION / m.ratio;
                 }
-                else if (m.card.includes('IHG')) {
-                    const elite = parseFloat(document.getElementById('ihgElite').value);
-                    const promo = parseInt(document.getElementById('ihgPromo').value);
-                    const multiplier = 1 + elite + (promo - 1);
-                    m.rate = 0.3125 * multiplier * IHG_PT_VALUATION;
-                    m.plan = `積分疊加 (${multiplier}x)`;
-                }
                 return true;
             });
 
@@ -622,7 +576,6 @@
             // 標頭與方案名稱
             let badgeStyle = m.isBaseline ? 'bg-indigo-100 text-indigo-700 border-indigo-200' : 'bg-rose-100 text-rose-700 border-rose-200';
             let badgeText = m.isBaseline ? `通用保底` : `精準適用`;
-            if (m.type === 'ihg') badgeStyle = 'bg-amber-100 text-amber-800 border-amber-200';
 
             let mainRateHtml = '';
             let returnValHtml = '';
@@ -633,17 +586,6 @@
                 mainRateHtml = `${m.ratio}<span class="text-lg font-bold ml-1">元/${m.unit}</span>`;
                 if(twdAmt > 0) returnValHtml = `約 ${Math.floor(twdAmt / m.ratio).toLocaleString()} ${m.unit}`;
                 else returnValHtml = '輸入金額試算';
-            } 
-            else if (m.type === 'ihg') {
-                mainRateHtml = `<span class="text-xl">大約等值</span> ${Number((m.rate * 100).toFixed(1))}<span class="text-lg font-bold ml-1">%</span>`;
-                if(twdAmt > 0) {
-                    let usdAmt = twdAmt * (fxRates['USD'] || 0.03125);
-                    let basePts = Math.floor(usdAmt * 10);
-                    let elitePts = Math.floor(basePts * parseFloat(document.getElementById('ihgElite').value));
-                    let promoPts = Math.floor(basePts * (parseInt(document.getElementById('ihgPromo').value) - 1));
-                    returnValHtml = `${(basePts + elitePts + promoPts).toLocaleString()} 點積分`;
-                    warningsHtml += `<div class="mt-2 text-[10px] text-blue-700/70 font-bold bg-white/50 p-1.5 rounded inline-block">官方算法: 基礎${basePts} + 菁英${elitePts} + 活動${promoPts}</div>`;
-                } else returnValHtml = '輸入金額試算';
             } 
             else {
                 let displayRate = rule ? (rule.base + rule.bonus)*100 : m.rate * 100;
@@ -688,9 +630,6 @@
             if (m.type === 'mileage') {
                 rateText = `${m.ratio}元/${m.unit}`;
                 valText = twdAmt > 0 ? `${Math.floor(twdAmt / m.ratio).toLocaleString()} ${m.unit}` : '-';
-            } else if (m.type === 'ihg') {
-                rateText = `約 ${Number((m.rate * 100).toFixed(1))}%`;
-                valText = twdAmt > 0 ? '見上方公式' : '-';
             } else {
                 rateText = rule ? `${Number(((rule.base + rule.bonus)*100).toFixed(2))}%` : `${Number((m.rate * 100).toFixed(2))}%`;
                 if(twdAmt > 0) {
