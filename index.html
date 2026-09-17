@@ -105,12 +105,11 @@
 
                 <div id="otherOptionsArea" class="hidden mb-6">
                     <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 ml-1">其他適用備案</h4>
-                    <!-- 備案清單不再限制顯示數量 -->
                     <div id="otherOptionsList" class="space-y-2"></div>
                 </div>
                 
                 <div class="text-center pt-4 border-t border-gray-100">
-                    <a href="https://docs.google.com/forms/d/1AiTGI4nADYNYx1tbN2XcwMqbjziHDy4Vg1qKCJuCGYY/viewform" target="_blank" class="inline-flex items-center justify-center text-gray-500 text-xs font-bold hover:text-blue-600 transition-colors">
+                    <a href="https://docs.google.com/forms/d/e/1FAIpQLScXQyG2T1K9AOhx_4oQ3NkVH8gB4s5cR_M2Dq6T0c_wG_x5Xw/viewform" target="_blank" class="inline-flex items-center justify-center text-gray-500 text-xs font-bold hover:text-blue-600 transition-colors">
                         <i class="fas fa-comment-dots mr-1.5"></i>資料有誤或找不到店名？點此回報
                     </a>
                 </div>
@@ -124,7 +123,7 @@
                 <p class="text-gray-500 font-bold text-sm mb-1">找不到符合的方案</p>
                 <p class="text-xs text-gray-400 mb-6">請嘗試更改關鍵字，或檢查支付組合。</p>
                 
-                <a href="https://docs.google.com/forms/d/1AiTGI4nADYNYx1tbN2XcwMqbjziHDy4Vg1qKCJuCGYY/viewform" target="_blank" class="inline-flex items-center justify-center bg-gray-800 text-white px-5 py-2.5 rounded-full text-xs font-bold shadow-md hover:bg-gray-700 transition-colors">
+                <a href="https://docs.google.com/forms/d/e/1FAIpQLScXQyG2T1K9AOhx_4oQ3NkVH8gB4s5cR_M2Dq6T0c_wG_x5Xw/viewform" target="_blank" class="inline-flex items-center justify-center bg-gray-800 text-white px-5 py-2.5 rounded-full text-xs font-bold shadow-md hover:bg-gray-700 transition-colors">
                     <i class="fas fa-comment-dots mr-2"></i>回報遺漏的店名給瘋哥
                 </a>
             </div>
@@ -164,9 +163,6 @@
         </div>
     </div>
 
-    <!-- ======================================================= -->
-    <!-- JS 邏輯區 (最強大腦保持完整) -->
-    <!-- ======================================================= -->
     <script>
         let globalDatabase = {}; 
         let currentCountryData = []; 
@@ -187,7 +183,6 @@
             .then(data => { if (data && data.rates) fxRates = data.rates; })
             .catch(error => console.error("匯率載入失敗", error));
         
-        // 特殊卡別規則
         const unicardConfig = {
             'simple': { name: '簡單選', base: 0.01, bonus: 0.02, capAmt: 50000, desc: "最高刷5萬拿滿加碼" },
             'any': { name: '任意選', base: 0.01, bonus: 0.025, capAmt: 40000, desc: "最高刷4萬拿滿加碼" },
@@ -200,21 +195,37 @@
             'light': { name: '旅人輕旅卡', tw: 20, overseas: 20 }
         };
 
-        const starluxConfig = {
-            'world': { name: '世界卡', tw: 20, overseas: 10, birthdayOverseas: 5 },
-            'business': { name: '商務鈦金卡', tw: 25, overseas: 15, birthdayOverseas: 10 },
-            'titanium': { name: '鈦金卡', tw: 28, overseas: 20, birthdayOverseas: null }
-        };
+        // 台新 Richart 權益智慧大腦
+        function getRichartMatch(searchVal, currentCountry) {
+            searchVal = searchVal.toLowerCase();
+            let bestMatch = { plan: '一般保底', rate: 0.003 }; 
+            
+            if (currentCountry !== 'TW') {
+                bestMatch = { plan: '玩旅刷', rate: 0.033 };
+                if (['line pay', '全盈', '全盈pay', '台新pay'].some(kw => searchVal.includes(kw))) {
+                    bestMatch = { plan: 'Pay著刷', rate: 0.023 };
+                }
+                return bestMatch;
+            }
 
-        // 台新 Richart 權益智慧大腦 (自動判定不需手動選單)
-        const richartRules = [
-            { plan: '天天刷', rate: 0.033, keywords: ['唐吉訶德', '大樹', '康是美', '寶雅', '家樂福', '大買家', '7-11', '全家'] },
-            { plan: '數趣刷', rate: 0.033, keywords: ['蝦皮', 'shopee', 'momo', '酷澎', 'coupang'] },
-            { plan: '玩旅刷', rate: 0.033, keywords: ['高鐵', '長榮', '星宇', '華航', '虎航', '機票', '海外'] },
-            { plan: 'Pay著刷', rate: 0.023, keywords: ['line pay', '全盈', '全盈pay'] }
-        ];
+            const rules = [
+                { plan: '天天刷', rate: 0.033, keywords: ['唐吉訶德', '大樹', '康是美', '寶雅', '家樂福', '大買家', '7-11', '7-eleven', '全家'] },
+                { plan: '數趣刷', rate: 0.033, keywords: ['蝦皮', 'shopee', 'momo', '酷澎', 'coupang'] },
+                { plan: '玩旅刷', rate: 0.033, keywords: ['高鐵', '長榮', '星宇', '華航', '虎航', '機票', '旅行社'] },
+                { plan: 'Pay著刷', rate: 0.023, keywords: ['line pay', '全盈', '全盈pay'] },
+                { plan: 'Pay著刷(台新Pay)', rate: 0.038, keywords: ['台新pay'] }
+            ];
 
-        // 載入資料庫
+            for (let rule of rules) {
+                if (rule.keywords.some(kw => searchVal.includes(kw))) {
+                    if (rule.rate > bestMatch.rate) {
+                        bestMatch = { plan: rule.plan, rate: rule.rate };
+                    }
+                }
+            }
+            return bestMatch;
+        }
+
         fetch('cube_config.json')
             .then(response => response.json())
             .then(data => { 
@@ -269,15 +280,15 @@
             let imgFileName = null;
             let cssFallback = '<i class="fas fa-credit-card text-gray-400 text-sm mr-2 mt-0.5 flex-shrink-0" id="fallback-'+method+'"></i>';
 
-            if (method.includes('玉山星宇')) imgFileName = 'starlux.png';
-            else if (method.includes('星展飛行')) imgFileName = 'dbs.png';
-            else if (method.includes('滙豐') || method.includes('旅人')) imgFileName = 'hsbc.png';
-            else if (method.includes('CUBE')) imgFileName = 'cube.png';
-            else if (method.includes('玉山Unicard')) imgFileName = 'unicard.png';
+            if (method.toUpperCase().includes('星宇')) imgFileName = 'starlux.png';
+            else if (method.toUpperCase().includes('飛行')) imgFileName = 'dbs.png';
+            else if (method.toUpperCase().includes('滙豐') || method.includes('旅人')) imgFileName = 'hsbc.png';
+            else if (method.toUpperCase().includes('CUBE')) imgFileName = 'cube.png';
+            else if (method.toUpperCase().includes('UNICARD')) imgFileName = 'unicard.png';
             else if (method.includes('台新')) cssFallback = '<span class="bg-[#E4002B] text-white text-[10px] px-1 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">台新</span>';
-            else if (method.includes('PayPay')) cssFallback = '<span class="bg-[#FF0032] text-white text-[12px] w-[20px] h-[20px] flex items-center justify-center rounded-[6px] font-black italic mr-2 shadow-sm flex-shrink-0">P</span>';
-            else if (method.includes('全盈Pay')) cssFallback = '<span class="bg-[#00B1EB] text-white text-[8px] px-1 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">全盈</span>';
-            else if (method.includes('LINE Pay')) cssFallback = '<i class="fab fa-line text-[#06C755] text-lg mr-2 mt-0.5 flex-shrink-0"></i>';
+            else if (method.toUpperCase().includes('PAYPAY')) cssFallback = '<span class="bg-[#FF0032] text-white text-[12px] w-[20px] h-[20px] flex items-center justify-center rounded-[6px] font-black italic mr-2 shadow-sm flex-shrink-0">P</span>';
+            else if (method.includes('全盈')) cssFallback = '<span class="bg-[#00B1EB] text-white text-[8px] px-1 py-0.5 rounded-[4px] font-black mr-2 mt-0.5 shadow-sm flex-shrink-0">全盈</span>';
+            else if (method.toUpperCase().includes('LINE PAY')) cssFallback = '<i class="fab fa-line text-[#06C755] text-lg mr-2 mt-0.5 flex-shrink-0"></i>';
 
             let mainName = method, subName = '';
             if (method.includes('(') && method.includes(')')) {
@@ -325,7 +336,7 @@
 
         function buildCheckboxBlock(method) {
             let extraDropdown = '';
-            if (method.includes('玉山Unicard')) {
+            if (method.toUpperCase().includes('UNICARD')) {
                 extraDropdown = `
                     <div class="mt-2.5 pt-2.5 border-t border-gray-100">
                         <select id="unicardLevel" class="w-full text-[11px] border-none rounded-md py-1.5 bg-emerald-50/50 text-emerald-700 font-bold focus:ring-0">
@@ -334,7 +345,7 @@
                             <option value="simple">🔰 簡單選 (3%)</option>
                         </select>
                     </div>`;
-            } else if (method.includes('全盈Pay')) {
+            } else if (method.includes('全盈')) {
                 extraDropdown = `
                     <div class="mt-2.5 pt-2.5 border-t border-gray-100">
                         <select id="pluspayLevel" class="w-full text-[11px] border-none rounded-md py-1.5 bg-blue-50/50 text-blue-700 font-bold focus:ring-0">
@@ -351,7 +362,7 @@
                             <option value="light">💳 旅人輕旅卡</option>
                         </select>
                     </div>`;
-            } else if (method.includes('玉山星宇')) {
+            } else if (method.toUpperCase().includes('星宇')) {
                 extraDropdown = `
                     <div class="mt-2.5 pt-2.5 border-t border-gray-100">
                         <select id="starluxLevel" class="w-full text-[11px] border-none rounded-md py-1.5 bg-yellow-50/50 text-yellow-700 font-bold focus:ring-0 mb-1.5" onchange="toggleStarluxBirthday()">
@@ -379,11 +390,6 @@
             const countryObj = globalDatabase[countryCode] || {};
             const paymentMethods = Object.keys(countryObj);
             
-            // 加入台新 Richart 選項 (如果資料庫裡沒有的話)
-            if (!paymentMethods.includes('台新Richart卡(太陽/玫瑰)')) {
-                paymentMethods.push('台新Richart卡(太陽/玫瑰)');
-            }
-
             const container = document.getElementById('garageContainer');
             
             if (paymentMethods.length === 0) {
@@ -441,7 +447,6 @@
                 else bdayDiv.classList.remove('hidden');
             }
 
-            // 建立 Data Pool
             currentCountryData = [];
             for (const method in countryObj) {
                 for (const plan in countryObj[method]) {
@@ -481,7 +486,7 @@
             if (!item) return null;
             if (item.name.includes('麥當勞APP點餐')) return { base: 0.03, bonus: 0.075, capAmt: 1066, desc: "最高刷 $1,066 拿滿加碼" };
             if (item.name.includes('星巴克儲值')) return { base: 0.03, bonus: 0.02, capAmt: 5000, desc: "最高刷 $5,000 拿滿加碼" };
-            if (item.card === '玉山Unicard') {
+            if (item.card.includes('玉山Unicard')) {
                 const uLevel = document.getElementById('unicardLevel') ? document.getElementById('unicardLevel').value : 'up';
                 return unicardConfig[uLevel];
             }
@@ -490,27 +495,6 @@
 
         function searchMatch(val, name) {
             return val.trim().toLowerCase().split(/\s+/).every(kw => name.toLowerCase().includes(kw));
-        }
-
-        // 台新 Richart 智慧比對引擎
-        function getRichartMatch(searchVal, currentCountry) {
-            searchVal = searchVal.toLowerCase();
-            let bestMatch = { plan: '一般保底', rate: 0.003 }; 
-            
-            // 海外實體保底 (玩旅刷)
-            if (currentCountry !== 'TW') {
-                bestMatch = { plan: '玩旅刷', rate: 0.033 };
-            }
-
-            // 關鍵字比對升級
-            for (let rule of richartRules) {
-                if (rule.keywords.some(kw => searchVal.includes(kw))) {
-                    if (rule.rate > bestMatch.rate) {
-                        bestMatch = { plan: rule.plan, rate: rule.rate };
-                    }
-                }
-            }
-            return bestMatch;
         }
 
         function executeSearch() {
@@ -547,28 +531,31 @@
                 searchMatch(val, item.name) && checkedMethods.includes(item.card)
             );
 
-            const hasCube = checkedMethods.some(m => m.includes('CUBE'));
-            const hasUnicard = checkedMethods.some(m => m.includes('玉山Unicard'));
-            const hasHsbc = checkedMethods.some(m => m.includes('滙豐'));
-            const hasRichart = checkedMethods.some(m => m.includes('台新Richart'));
+            const cubeMethod = checkedMethods.find(m => m.toUpperCase().includes('CUBE'));
+            const unicardMethod = checkedMethods.find(m => m.toUpperCase().includes('UNICARD'));
+            const hsbcMethod = checkedMethods.find(m => m.includes('滙豐') || m.includes('旅人'));
+            const richartMethod = checkedMethods.find(m => m.includes('台新') || m.toUpperCase().includes('RICHART'));
 
-            // 通用保底與智慧引擎寫入
             if (currentCountry !== 'TW') {
-                if (hasCube && !matchedList.some(m => m.card.includes('CUBE'))) matchedList.push({ card: "CUBE卡", name: `${val} (海外通用)`, plan: "趣旅行", type: 'cashback', rate: 0.03, isBaseline: true });
-                if (hasUnicard && !matchedList.some(m => m.card.includes('玉山Unicard'))) {
+                if (cubeMethod && !matchedList.some(m => m.card === cubeMethod)) 
+                    matchedList.push({ card: cubeMethod, name: `${val} (海外實體)`, plan: "趣旅行", type: 'cashback', rate: 0.03, isBaseline: true });
+                
+                if (unicardMethod && !matchedList.some(m => m.card === unicardMethod)) {
                     const uConf = unicardConfig[document.getElementById('unicardLevel').value];
-                    matchedList.push({ card: "玉山Unicard", name: `${val} (海外通用)`, plan: uConf.name, type: 'cashback', rate: uConf.base + uConf.bonus, isBaseline: true });
+                    matchedList.push({ card: unicardMethod, name: `${val} (海外實體)`, plan: uConf.name, type: 'cashback', rate: uConf.base + uConf.bonus, isBaseline: true });
                 }
-                if (hasHsbc && !matchedList.some(m => m.card.includes('滙豐'))) matchedList.push({ card: "滙豐旅人卡", name: `${val} (海外通用)`, plan: "海外消費", type: 'mileage', ratio: 10, unit: '哩', rate: MILEAGE_VALUATION/10, isBaseline: true });
+                if (hsbcMethod && !matchedList.some(m => m.card === hsbcMethod)) 
+                    matchedList.push({ card: hsbcMethod, name: `${val} (海外消費)`, plan: "海外消費", type: 'mileage', ratio: 10, unit: '哩', rate: MILEAGE_VALUATION/10, isBaseline: true });
             } else {
-                if (hasHsbc && !matchedList.some(m => m.card.includes('滙豐'))) matchedList.push({ card: "滙豐旅人卡", name: `${val} (國內通用)`, plan: "國內消費", type: 'mileage', ratio: 18, unit: '哩', rate: MILEAGE_VALUATION/18, isBaseline: true });
+                if (hsbcMethod && !matchedList.some(m => m.card === hsbcMethod)) 
+                    matchedList.push({ card: hsbcMethod, name: `${val} (國內通用)`, plan: "國內消費", type: 'mileage', ratio: 18, unit: '哩', rate: MILEAGE_VALUATION/18, isBaseline: true });
             }
 
-            // 台新 Richart 自動判定寫入
-            if (hasRichart) {
+            if (richartMethod) {
+                matchedList = matchedList.filter(m => m.card !== richartMethod); 
                 const richartResult = getRichartMatch(val, currentCountry);
                 matchedList.push({ 
-                    card: "台新Richart卡", 
+                    card: richartMethod, 
                     name: `${val} (智慧判定)`, 
                     plan: richartResult.plan, 
                     type: 'cashback', 
@@ -577,14 +564,13 @@
                 });
             }
 
-            // 參數動態計算
             matchedList = matchedList.filter(m => {
-                if (m.card === '玉山Unicard') {
+                if (m.card.toUpperCase().includes('UNICARD')) {
                     const uConf = unicardConfig[document.getElementById('unicardLevel').value];
                     m.rate = uConf.base + uConf.bonus; 
                     m.plan = uConf.name; 
                 } 
-                else if (m.card.includes('滙豐')) {
+                else if (m.card.includes('滙豐') || m.card.includes('旅人')) {
                     const hConf = hsbcConfig[document.getElementById('hsbcLevel').value];
                     m.card = hConf.name;
                     m.ratio = currentCountry === 'TW' ? hConf.tw : hConf.overseas;
@@ -593,7 +579,6 @@
                 return true;
             });
 
-            // 排序與去重
             const uniqueMap = new Map();
             matchedList.forEach(m => {
                 let key = `${m.card}_${m.plan}_${m.rate}`;
@@ -608,14 +593,11 @@
                 
                 document.getElementById('matchCountBadge').innerText = `共 ${matchedList.length} 個方案`;
                 
-                // 渲染冠軍卡片
                 renderChampionCard(matchedList[0], twdAmt);
 
-                // 渲染其他備案 (完全解封，顯示所有適用選項)
                 const otherList = document.getElementById('otherOptionsList');
                 if (matchedList.length > 1) {
                     document.getElementById('otherOptionsArea').classList.remove('hidden');
-                    // 這裡改為 slice(1) 解除備案數量的限制
                     otherList.innerHTML = matchedList.slice(1).map(m => renderSmallCard(m, twdAmt)).join('');
                 } else {
                     document.getElementById('otherOptionsArea').classList.add('hidden');
@@ -628,7 +610,6 @@
             }
         }
 
-        // 渲染冠軍卡片
         function renderChampionCard(m, twdAmt) {
             const card = document.getElementById('championCard');
             let rule = getPromoRule(m); 
@@ -651,11 +632,15 @@
                 if(twdAmt > 0) {
                     let reward = rule ? (twdAmt * rule.base + Math.min(twdAmt, rule.capAmt) * rule.bonus) : twdAmt * m.rate;
                     returnValHtml = `NT$ ${Math.round(reward).toLocaleString()}`;
-                    if(rule && twdAmt > rule.capAmt) warningsHtml += `<div class="mt-1.5 text-xs text-rose-500 font-bold"><i class="fas fa-exclamation-triangle mr-1"></i>已超過加碼上限</div>`;
+                    if(rule && twdAmt > rule.capAmt) warningsHtml += `<div class="mt-1 text-xs text-rose-500 font-bold"><i class="fas fa-exclamation-triangle mr-1"></i>已超過加碼上限</div>`;
                 } else returnValHtml = '輸入金額試算';
             }
 
-            if(rule) warningsHtml += `<div class="mt-1 text-xs text-indigo-700/80 font-bold"><i class="fas fa-info-circle mr-1"></i>封頂限制：${rule.desc}</div>`;
+            if(rule) {
+                warningsHtml += `<div class="mt-1 text-[11px] text-amber-600 font-bold bg-amber-50 px-2 py-1 rounded inline-block shadow-sm"><i class="fas fa-info-circle mr-1"></i>${rule.desc}</div>`;
+            } else {
+                warningsHtml += `<div class="mt-1 text-[11px] text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded inline-block shadow-sm"><i class="fas fa-infinity mr-1"></i>回饋無上限</div>`;
+            }
 
             card.innerHTML = `
                 <div class="relative z-10 flex justify-between items-start mb-4">
@@ -680,10 +665,12 @@
             `;
         }
 
-        // 渲染小型備案卡片
         function renderSmallCard(m, twdAmt) {
             let rateText = '', valText = '';
             let rule = getPromoRule(m);
+            let limitIcon = rule 
+                ? `<span class="text-[9px] text-amber-500 font-bold ml-1 bg-amber-50 px-1 py-0.5 rounded" title="${rule.desc}">有上限</span>` 
+                : `<span class="text-[9px] text-emerald-500 font-bold ml-1 bg-emerald-50 px-1 py-0.5 rounded"><i class="fas fa-infinity"></i> 無上限</span>`;
 
             if (m.type === 'mileage') {
                 rateText = `${m.ratio}元/${m.unit}`;
@@ -700,7 +687,7 @@
                 <div class="bg-white p-3 rounded-xl border border-gray-100 flex justify-between items-center shadow-sm">
                     <div>
                         <div class="text-[13px] font-bold text-gray-800">${m.card.replace(/ \(.+\)/, '')} <span class="text-gray-400 text-[11px] ml-1 font-normal">${m.plan}</span></div>
-                        <div class="text-[10px] text-gray-400 font-bold">${m.name}</div>
+                        <div class="text-[10px] text-gray-400 font-bold mt-0.5 flex items-center">${m.name} ${limitIcon}</div>
                     </div>
                     <div class="text-right">
                         <div class="text-sm font-black text-blue-600">${rateText}</div>
