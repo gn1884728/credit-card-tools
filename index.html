@@ -99,12 +99,14 @@
                     <span class="text-[10px] text-gray-400 font-bold" id="matchCountBadge"></span>
                 </div>
                 
+                <!-- 冠軍卡片 -->
                 <div id="championCard" class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-[20px] p-5 shadow-md mb-4 relative overflow-hidden">
                     <div class="absolute top-0 right-0 w-24 h-24 bg-blue-500 rounded-full mix-blend-multiply filter blur-2xl opacity-10 transform translate-x-1/2 -translate-y-1/2"></div>
                 </div>
 
+                <!-- 其他適用備案 (無限制完整呈現所有勾選卡片) -->
                 <div id="otherOptionsArea" class="hidden mb-6">
-                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 ml-1">其他適用備案</h4>
+                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 ml-1">其他適用方案與備案</h4>
                     <div id="otherOptionsList" class="space-y-2"></div>
                 </div>
                 
@@ -487,7 +489,6 @@
             if (item.name.includes('麥當勞APP點餐')) return { base: 0.03, bonus: 0.075, capAmt: 1066, desc: "最高刷 $1,066 拿滿加碼" };
             if (item.name.includes('星巴克儲值')) return { base: 0.03, bonus: 0.02, capAmt: 5000, desc: "最高刷 $5,000 拿滿加碼" };
             
-            // 安全防呆讀取 unicaldLevel select
             if (item.card.includes('Unicard')) {
                 const uSel = document.getElementById('unicardLevel');
                 const uLevel = uSel ? uSel.value : 'up';
@@ -500,7 +501,6 @@
             return val.trim().toLowerCase().split(/\s+/).every(kw => name.toLowerCase().includes(kw));
         }
 
-        // 外層防呆包覆 (Catch Error 避免整頁崩潰)
         function executeSearch() {
             try {
                 _executeSearch();
@@ -542,46 +542,40 @@
 
             idleState.classList.add('hidden');
 
-            // 嚴格淺拷貝避免資料汙染 (Data Mutation 絕對防禦)
+            // 1. 抓出所有符合關鍵字的項目 (進行淺拷貝避免汙染)
             let matchedList = currentCountryData
                 .filter(item => searchMatch(val, item.name) && checkedMethods.includes(item.card))
                 .map(m => ({ ...m }));
 
-            const cubeMethod = checkedMethods.find(m => m.includes('CUBE'));
-            const unicardMethod = checkedMethods.find(m => m.includes('Unicard'));
-            const hsbcMethod = checkedMethods.find(m => m.includes('滙豐') || m.includes('旅人'));
-            const richartMethod = checkedMethods.find(m => m.includes('台新') || m.includes('Richart'));
-
-            if (currentCountry !== 'TW') {
-                if (cubeMethod && !matchedList.some(m => m.card === cubeMethod)) 
-                    matchedList.push({ card: cubeMethod, name: `${val} (海外實體)`, plan: "趣旅行", type: 'cashback', rate: 0.03, isBaseline: true });
-                
-                if (unicardMethod && !matchedList.some(m => m.card === unicardMethod)) {
-                    const uSel = document.getElementById('unicardLevel');
-                    const uConf = unicardConfig[uSel ? uSel.value : 'up'];
-                    matchedList.push({ card: unicardMethod, name: `${val} (海外實體)`, plan: uConf.name, type: 'cashback', rate: uConf.base + uConf.bonus, isBaseline: true });
+            // 2. 針對使用者勾選的每張卡片，如果沒有在資料庫被精準搜到，自動補上保底/通用規則
+            checkedMethods.forEach(cardName => {
+                // 檢查這張卡是不是已經在 matchedList 裡面了
+                const alreadyHas = matchedList.some(m => m.card === cardName);
+                if (!alreadyHas) {
+                    // 如果使用者勾選了這張卡，但它沒有出現在該店的特定優惠中，就依照它的性質補上預設/保底方案
+                    if (cardName.includes('CUBE')) {
+                        matchedList.push({ card: cardName, name: `${val} (${currentCountry === 'TW' ? '國內通用' : '趣旅行'})`, plan: currentCountry === 'TW' ? '集精選' : '趣旅行', type: 'cashback', rate: currentCountry === 'TW' ? 0.02 : 0.03, isBaseline: true });
+                    } else if (cardName.includes('Unicard')) {
+                        const uSel = document.getElementById('unicardLevel');
+                        const uConf = unicardConfig[uSel ? uSel.value : 'up'];
+                        matchedList.push({ card: cardName, name: `${val} (${currentCountry === 'TW' ? '一般消費' : '海外實體'})`, plan: uConf.name, type: 'cashback', rate: uConf.base + uConf.bonus, isBaseline: true });
+                    } else if (cardName.includes('滙豐') || cardName.includes('旅人')) {
+                        const hSel = document.getElementById('hsbcLevel');
+                        const hConf = hsbcConfig[hSel ? hSel.value : 'infinite'];
+                        const ratio = currentCountry === 'TW' ? hConf.tw : hConf.overseas;
+                        matchedList.push({ card: hConf.name, name: `${val} (${currentCountry === 'TW' ? '國內通用' : '海外消費'})`, plan: currentCountry === 'TW' ? '國內消費' : '海外消費', type: 'mileage', ratio: ratio, unit: '哩', rate: MILEAGE_VALUATION/ratio, isBaseline: true });
+                    } else if (cardName.includes('台新') || cardName.includes('Richart')) {
+                        const richartResult = getRichartMatch(val, currentCountry);
+                        const matchNameSuffix = currentCountry !== 'TW' ? '(海外實體)' : '(國內實體)';
+                        matchedList.push({ card: cardName, name: `${val} ${matchNameSuffix}`, plan: richartResult.plan, type: 'cashback', rate: richartResult.rate, isBaseline: true });
+                    } else {
+                        // 其他一般支付或錢包，若沒特定命中就給預設保底
+                        matchedList.push({ card: cardName, name: `${val} (一般通路)`, plan: '一般消費', type: 'cashback', rate: 0.01, isBaseline: true });
+                    }
                 }
-                if (hsbcMethod && !matchedList.some(m => m.card === hsbcMethod)) 
-                    matchedList.push({ card: hsbcMethod, name: `${val} (海外消費)`, plan: "海外消費", type: 'mileage', ratio: 10, unit: '哩', rate: MILEAGE_VALUATION/10, isBaseline: true });
-            } else {
-                if (hsbcMethod && !matchedList.some(m => m.card === hsbcMethod)) 
-                    matchedList.push({ card: hsbcMethod, name: `${val} (國內通用)`, plan: "國內消費", type: 'mileage', ratio: 18, unit: '哩', rate: MILEAGE_VALUATION/18, isBaseline: true });
-            }
+            });
 
-            if (richartMethod) {
-                matchedList = matchedList.filter(m => m.card !== richartMethod); 
-                const richartResult = getRichartMatch(val, currentCountry);
-                const matchNameSuffix = currentCountry !== 'TW' ? '(海外實體)' : '(國內實體)';
-                matchedList.push({ 
-                    card: richartMethod, 
-                    name: `${val} ${matchNameSuffix}`, 
-                    plan: richartResult.plan, 
-                    type: 'cashback', 
-                    rate: richartResult.rate, 
-                    isBaseline: richartResult.plan === '一般保底' 
-                });
-            }
-
+            // 3. 統一動態參數計算 (Unicard 級距、滙豐哩程折算等)
             matchedList = matchedList.map(m => {
                 if (m.card.includes('Unicard')) {
                     const uSel = document.getElementById('unicardLevel');
@@ -589,22 +583,18 @@
                     m.rate = uConf.base + uConf.bonus; 
                     m.plan = uConf.name; 
                 } 
-                else if (m.card.includes('滙豐') || m.card.includes('旅人')) {
+                else if (m.card.includes('滙豐') || m.card.includes('旅人') || m.card.includes('旅人無限卡') || m.card.includes('旅人御璽卡') || m.card.includes('旅人輕旅卡')) {
                     const hSel = document.getElementById('hsbcLevel');
                     const hConf = hsbcConfig[hSel ? hSel.value : 'infinite'];
                     m.card = hConf.name;
                     m.ratio = currentCountry === 'TW' ? hConf.tw : hConf.overseas;
-                    m.rate = MILEAGE_VALUATION / m.ratio; // 安全防呆：使用正確的 m.ratio
+                    m.rate = MILEAGE_VALUATION / m.ratio;
                 }
                 return m;
             });
 
-            const uniqueMap = new Map();
-            matchedList.forEach(m => {
-                let key = `${m.card}_${m.plan}_${m.rate}`;
-                if (!uniqueMap.has(key) || (!m.isBaseline && uniqueMap.get(key).isBaseline)) uniqueMap.set(key, m);
-            });
-            matchedList = Array.from(uniqueMap.values()).sort((a, b) => b.rate - a.rate);
+            // 4. 排序：回饋率由高到低
+            matchedList.sort((a, b) => b.rate - a.rate);
 
             if (matchedList.length > 0) {
                 noResult.classList.add('hidden');
@@ -613,8 +603,10 @@
                 
                 document.getElementById('matchCountBadge').innerText = `共 ${matchedList.length} 個方案`;
                 
+                // 第一名渲染為大張冠軍卡
                 renderChampionCard(matchedList[0], twdAmt);
 
+                // 第二名開始全部無限制完整呈現在備案清單
                 const otherList = document.getElementById('otherOptionsList');
                 if (matchedList.length > 1) {
                     document.getElementById('otherOptionsArea').classList.remove('hidden');
