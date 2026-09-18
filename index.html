@@ -99,12 +99,10 @@
                     <span class="text-[10px] text-gray-400 font-bold" id="matchCountBadge"></span>
                 </div>
                 
-                <!-- 冠軍卡片 -->
                 <div id="championCard" class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-[20px] p-5 shadow-md mb-4 relative overflow-hidden">
                     <div class="absolute top-0 right-0 w-24 h-24 bg-blue-500 rounded-full mix-blend-multiply filter blur-2xl opacity-10 transform translate-x-1/2 -translate-y-1/2"></div>
                 </div>
 
-                <!-- 其他適用備案 (無限制完整呈現所有勾選卡片) -->
                 <div id="otherOptionsArea" class="hidden mb-6">
                     <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 ml-1">其他適用方案與備案</h4>
                     <div id="otherOptionsList" class="space-y-2"></div>
@@ -179,7 +177,6 @@
             'TH': { code: 'THB', name: '泰銖', sym: '฿' }
         };
 
-        // 載入匯率
         fetch('https://api.exchangerate-api.com/v4/latest/TWD')
             .then(response => response.json())
             .then(data => { if (data && data.rates) fxRates = data.rates; })
@@ -197,7 +194,19 @@
             'light': { name: '旅人輕旅卡', tw: 20, overseas: 20 }
         };
 
-        // 台新 Richart 權益智慧大腦
+        // 星展飛行卡設定 (世界之極/世界/商務)
+        const dbsFlightConfig = {
+            'tw': 18, // 18元/哩
+            'overseas': 15 // 15元/哩 (或依卡等調整)
+        };
+
+        // 玉山星宇卡設定 (世界卡/商務鈦金卡/鈦金卡)
+        const starluxConfig = {
+            'world': { tw: 20, overseas: 10 },
+            'business': { tw: 25, overseas: 15 },
+            'titanium': { tw: 28, overseas: 20 }
+        };
+
         function getRichartMatch(searchVal, currentCountry) {
             searchVal = searchVal.toLowerCase();
             let bestMatch = { plan: '一般保底', rate: 0.003 }; 
@@ -413,6 +422,8 @@
                         if (countryObj[method][plan].some(store => store.type === 'mileage')) { isMileage = true; break; }
                     }
                 }
+                // 額外強制把星展飛行與玉山星宇歸類到哩程卡
+                if (method.includes('星展飛行') || method.includes('玉山星宇')) isMileage = true;
                 
                 if (isMileage) categories.mileage.items.push(htmlBlock);
                 else if (/Pay|支付|Wallet|iPass|街口|TrueMoney/i.test(method)) categories.mobile.items.push(htmlBlock);
@@ -542,17 +553,21 @@
 
             idleState.classList.add('hidden');
 
-            // 1. 抓出所有符合關鍵字的項目 (進行淺拷貝避免汙染)
             let matchedList = currentCountryData
                 .filter(item => searchMatch(val, item.name) && checkedMethods.includes(item.card))
                 .map(m => ({ ...m }));
 
-            // 2. 針對使用者勾選的每張卡片，如果沒有在資料庫被精準搜到，自動補上保底/通用規則
+            const cubeMethod = checkedMethods.find(m => m.includes('CUBE'));
+            const unicardMethod = checkedMethods.find(m => m.includes('Unicard'));
+            const hsbcMethod = checkedMethods.find(m => m.includes('滙豐') || m.includes('旅人'));
+            const richartMethod = checkedMethods.find(m => m.includes('台新') || m.includes('Richart'));
+            const dbsFlightMethod = checkedMethods.find(m => m.includes('星展飛行'));
+            const starluxMethod = checkedMethods.find(m => m.includes('玉山星宇'));
+
+            // 自動補上保底與通用機制
             checkedMethods.forEach(cardName => {
-                // 檢查這張卡是不是已經在 matchedList 裡面了
                 const alreadyHas = matchedList.some(m => m.card === cardName);
                 if (!alreadyHas) {
-                    // 如果使用者勾選了這張卡，但它沒有出現在該店的特定優惠中，就依照它的性質補上預設/保底方案
                     if (cardName.includes('CUBE')) {
                         matchedList.push({ card: cardName, name: `${val} (${currentCountry === 'TW' ? '國內通用' : '趣旅行'})`, plan: currentCountry === 'TW' ? '集精選' : '趣旅行', type: 'cashback', rate: currentCountry === 'TW' ? 0.02 : 0.03, isBaseline: true });
                     } else if (cardName.includes('Unicard')) {
@@ -564,18 +579,23 @@
                         const hConf = hsbcConfig[hSel ? hSel.value : 'infinite'];
                         const ratio = currentCountry === 'TW' ? hConf.tw : hConf.overseas;
                         matchedList.push({ card: hConf.name, name: `${val} (${currentCountry === 'TW' ? '國內通用' : '海外消費'})`, plan: currentCountry === 'TW' ? '國內消費' : '海外消費', type: 'mileage', ratio: ratio, unit: '哩', rate: MILEAGE_VALUATION/ratio, isBaseline: true });
+                    } else if (cardName.includes('星展飛行')) {
+                        const ratio = currentCountry === 'TW' ? 18 : 15;
+                        matchedList.push({ card: cardName, name: `${val} (${currentCountry === 'TW' ? '國內消費' : '海外消費'})`, plan: '一般消費', type: 'mileage', ratio: ratio, unit: '哩', rate: MILEAGE_VALUATION/ratio, isBaseline: true });
+                    } else if (cardName.includes('玉山星宇')) {
+                        const ratio = currentCountry === 'TW' ? 20 : 10;
+                        matchedList.push({ card: cardName, name: `${val} (${currentCountry === 'TW' ? '國內消費' : '海外消費'})`, plan: '一般消費', type: 'mileage', ratio: ratio, unit: '哩', rate: MILEAGE_VALUATION/ratio, isBaseline: true });
                     } else if (cardName.includes('台新') || cardName.includes('Richart')) {
                         const richartResult = getRichartMatch(val, currentCountry);
                         const matchNameSuffix = currentCountry !== 'TW' ? '(海外實體)' : '(國內實體)';
                         matchedList.push({ card: cardName, name: `${val} ${matchNameSuffix}`, plan: richartResult.plan, type: 'cashback', rate: richartResult.rate, isBaseline: true });
                     } else {
-                        // 其他一般支付或錢包，若沒特定命中就給預設保底
                         matchedList.push({ card: cardName, name: `${val} (一般通路)`, plan: '一般消費', type: 'cashback', rate: 0.01, isBaseline: true });
                     }
                 }
             });
 
-            // 3. 統一動態參數計算 (Unicard 級距、滙豐哩程折算等)
+            // 動態參數計算與哩程校正
             matchedList = matchedList.map(m => {
                 if (m.card.includes('Unicard')) {
                     const uSel = document.getElementById('unicardLevel');
@@ -590,10 +610,22 @@
                     m.ratio = currentCountry === 'TW' ? hConf.tw : hConf.overseas;
                     m.rate = MILEAGE_VALUATION / m.ratio;
                 }
+                else if (m.card.includes('星展飛行')) {
+                    m.ratio = currentCountry === 'TW' ? 18 : 15;
+                    m.type = 'mileage';
+                    m.unit = '哩';
+                    m.rate = MILEAGE_VALUATION / m.ratio;
+                }
+                else if (m.card.includes('玉山星宇')) {
+                    m.ratio = currentCountry === 'TW' ? 20 : 10;
+                    m.type = 'mileage';
+                    m.unit = '哩';
+                    m.rate = MILEAGE_VALUATION / m.ratio;
+                }
                 return m;
             });
 
-            // 4. 排序：回饋率由高到低
+            // 排序：回饋率由高到低
             matchedList.sort((a, b) => b.rate - a.rate);
 
             if (matchedList.length > 0) {
@@ -603,10 +635,8 @@
                 
                 document.getElementById('matchCountBadge').innerText = `共 ${matchedList.length} 個方案`;
                 
-                // 第一名渲染為大張冠軍卡
                 renderChampionCard(matchedList[0], twdAmt);
 
-                // 第二名開始全部無限制完整呈現在備案清單
                 const otherList = document.getElementById('otherOptionsList');
                 if (matchedList.length > 1) {
                     document.getElementById('otherOptionsArea').classList.remove('hidden');
