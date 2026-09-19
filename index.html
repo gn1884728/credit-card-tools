@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-TW" :class="currentTheme.htmlBg">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -18,9 +18,16 @@
     <link rel="icon" type="image/png" href="icon.png.png">
     
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+        html, body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            -webkit-tap-highlight-color: transparent; 
+            margin: 0; padding: 0; min-height: 100vh; height: 100%;
+            background-color: var(--page-bg, #f8fafc);
+            color: var(--page-text, #1e293b);
+        }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         .text-truncate-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -33,14 +40,18 @@
         .backdrop.show { opacity: 1; pointer-events: auto; }
     </style>
 </head>
-<body class="min-h-screen flex justify-center items-start text-gray-800 pb-[env(safe-area-inset-bottom)]">
+<body :class="currentTheme.bgClass" class="min-h-screen flex justify-center items-start pb-[env(safe-area-inset-bottom)] transition-colors duration-300">
     
-    <div class="w-full max-w-md bg-white min-h-screen relative shadow-2xl overflow-hidden flex flex-col">
+    <div id="app" class="w-full max-w-md :class="currentTheme.cardBg" min-h-screen relative shadow-2xl overflow-hidden flex flex-col transition-colors duration-300" style="background-color: var(--card-bg, #ffffff);">
         
-        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 pt-[calc(env(safe-area-inset-top)+2.5rem)] pb-6 px-6 shadow-md z-10 relative">
-            <h2 class="text-2xl font-black text-center text-white tracking-wide flex justify-center items-center">
+        <!-- 頂部導覽列 (加入主題切換按鈕) -->
+        <div :class="currentTheme.headerBg" class="pt-[calc(env(safe-area-inset-top)+2rem)] pb-5 px-6 shadow-md z-10 relative flex justify-between items-center transition-colors duration-300">
+            <h2 class="text-xl font-black text-white tracking-wide flex items-center">
                 <i class="fas fa-bolt text-yellow-300 mr-2"></i>刷卡速查
             </h2>
+            <button @click="cycleTheme" class="text-xs font-bold bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-xl backdrop-blur-sm transition flex items-center gap-1.5">
+                🎨 {{ currentTheme.name }}
+            </button>
         </div>
 
         <div class="flex-1 overflow-y-auto px-5 py-6 pb-24 scrollbar-hide">
@@ -54,62 +65,62 @@
             </div>
 
             <!-- 輸入區塊 -->
-            <div class="bg-gray-50 p-4 rounded-[20px] mb-6 border border-gray-100 shadow-sm">
+            <div :class="currentTheme.inputBoxBg" class="p-4 rounded-[20px] mb-6 border shadow-sm transition-colors duration-300">
                 <div class="mb-4">
                     <div class="flex justify-between items-end mb-2">
-                        <label for="consumeAmt" class="text-sm font-black text-gray-800 tracking-wide" id="amtLabel">消費金額 (TWD)</label>
-                        <span id="twdEstimate" class="text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-md hidden"></span>
+                        <label for="consumeAmt" class="text-sm font-black tracking-wide" :class="currentTheme.textSub" id="amtLabel">消費金額 (TWD)</label>
+                        <span id="twdEstimate" class="text-[10px] font-bold text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded-md hidden"></span>
                     </div>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <span class="text-gray-400 font-bold" id="currencySymbol">$</span>
+                            <span class="font-bold opacity-60" id="currencySymbol">$</span>
                         </div>
-                        <input type="number" id="consumeAmt" placeholder="輸入當地金額..." class="w-full pl-8 pr-4 py-3.5 rounded-xl border-none bg-white text-lg focus:ring-2 focus:ring-blue-500 text-gray-800 font-black shadow-sm" oninput="executeSearch()">
+                        <input type="number" id="consumeAmt" placeholder="輸入當地金額..." :class="currentTheme.inputFieldBg" class="w-full pl-8 pr-4 py-3.5 rounded-xl border-none text-lg font-black shadow-sm focus:ring-2 focus:ring-blue-500" oninput="executeSearch()">
                     </div>
                 </div>
 
                 <div>
-                    <label for="storeSearch" class="text-sm font-black text-gray-800 tracking-wide mb-2 block">消費通路</label>
+                    <label for="storeSearch" class="text-sm font-black tracking-wide mb-2 block" :class="currentTheme.textSub">消費通路</label>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fas fa-search text-gray-400"></i>
+                            <i class="fas fa-search opacity-50"></i>
                         </div>
-                        <input type="text" id="storeSearch" oninput="executeSearch()" placeholder="輸入店名、平台或飯店..." class="w-full pl-9 pr-4 py-3 border-none rounded-xl bg-white text-base focus:ring-2 focus:ring-blue-500 text-gray-800 font-bold shadow-sm">
+                        <input type="text" id="storeSearch" oninput="executeSearch()" placeholder="輸入店名、平台或飯店..." :class="currentTheme.inputFieldBg" class="w-full pl-9 pr-4 py-3 border-none rounded-xl text-base font-bold shadow-sm focus:ring-2 focus:ring-blue-500">
                     </div>
                 </div>
             </div>
 
-            <button onclick="togglePaymentModal(true)" class="w-full mb-6 bg-white border border-gray-200 hover:border-blue-300 p-3.5 rounded-[16px] shadow-sm flex items-center justify-between transition-colors">
+            <button onclick="togglePaymentModal(true)" :class="currentTheme.walletBtn" class="w-full mb-6 border p-3.5 rounded-[16px] shadow-sm flex items-center justify-between transition-colors">
                 <div class="flex items-center">
-                    <div class="bg-indigo-100 text-indigo-600 w-8 h-8 rounded-full flex items-center justify-center mr-3">
+                    <div class="bg-indigo-500/20 text-indigo-500 w-8 h-8 rounded-full flex items-center justify-center mr-3">
                         <i class="fas fa-wallet text-sm"></i>
                     </div>
                     <div class="text-left">
-                        <div class="text-xs text-gray-500 font-bold">我的支付組合</div>
-                        <div class="text-sm font-black text-gray-800" id="activeToolsSummary">載入中...</div>
+                        <div class="text-xs opacity-70 font-bold">我的支付組合</div>
+                        <div class="text-sm font-black" id="activeToolsSummary">載入中...</div>
                     </div>
                 </div>
-                <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
+                <i class="fas fa-chevron-right opacity-40 text-sm"></i>
             </button>
             
             <!-- 結果顯示區 -->
             <div id="resultsArea" aria-live="polite" class="hidden opacity-0 transition-opacity duration-300">
                 <div class="flex items-center mb-3">
-                    <h3 class="text-sm font-black text-gray-800 flex-1">🏆 最佳推薦</h3>
-                    <span class="text-[10px] text-gray-400 font-bold" id="matchCountBadge"></span>
+                    <h3 class="text-sm font-black flex-1" :class="currentTheme.textSub">🏆 最佳推薦</h3>
+                    <span class="text-[10px] opacity-60 font-bold" id="matchCountBadge"></span>
                 </div>
                 
-                <div id="championCard" class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-[20px] p-5 shadow-md mb-4 relative overflow-hidden">
+                <div id="championCard" :class="currentTheme.champCard" class="border rounded-[20px] p-5 shadow-md mb-4 relative overflow-hidden">
                     <div class="absolute top-0 right-0 w-24 h-24 bg-blue-500 rounded-full mix-blend-multiply filter blur-2xl opacity-10 transform translate-x-1/2 -translate-y-1/2"></div>
                 </div>
 
                 <div id="otherOptionsArea" class="hidden mb-6">
-                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 ml-1">其他適用方案與備案</h4>
+                    <h4 class="text-xs font-bold opacity-60 uppercase tracking-wider mb-2 ml-1">其他適用方案與備案</h4>
                     <div id="otherOptionsList" class="space-y-2"></div>
                 </div>
                 
-                <div class="text-center pt-4 border-t border-gray-100">
-                    <a href="https://docs.google.com/forms/d/e/1FAIpQLScXQyG2T1K9AOhx_4oQ3NkVH8gB4s5cR_M2Dq6T0c_wG_x5Xw/viewform" target="_blank" class="inline-flex items-center justify-center text-gray-500 text-xs font-bold hover:text-blue-600 transition-colors">
+                <div class="text-center pt-4 border-t opacity-80">
+                    <a href="https://docs.google.com/forms/d/e/1FAIpQLScXQyG2T1K9AOhx_4oQ3NkVH8gB4s5cR_M2Dq6T0c_wG_x5Xw/viewform" target="_blank" class="inline-flex items-center justify-center text-xs font-bold hover:underline transition-colors">
                         <i class="fas fa-comment-dots mr-1.5"></i>資料有誤或找不到店名？點此回報
                     </a>
                 </div>
@@ -117,11 +128,11 @@
 
             <!-- 無結果提示 -->
             <div id="noResultPrompt" class="hidden text-center py-8">
-                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <i class="fas fa-search-minus text-2xl text-gray-300"></i>
+                <div class="w-16 h-16 bg-gray-500/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-search-minus text-2xl opacity-40"></i>
                 </div>
-                <p class="text-gray-500 font-bold text-sm mb-1">找不到符合的方案</p>
-                <p class="text-xs text-gray-400 mb-6">請嘗試更改關鍵字，或檢查支付組合。</p>
+                <p class="font-bold text-sm mb-1">找不到符合的方案</p>
+                <p class="text-xs opacity-60 mb-6">請嘗試更改關鍵字，或檢查支付組合。</p>
                 
                 <a href="https://docs.google.com/forms/d/e/1FAIpQLScXQyG2T1K9AOhx_4oQ3NkVH8gB4s5cR_M2Dq6T0c_wG_x5Xw/viewform" target="_blank" class="inline-flex items-center justify-center bg-gray-800 text-white px-5 py-2.5 rounded-full text-xs font-bold shadow-md hover:bg-gray-700 transition-colors">
                     <i class="fas fa-comment-dots mr-2"></i>回報遺漏的店名給瘋哥
@@ -129,8 +140,8 @@
             </div>
 
             <div id="idleState" class="text-center py-10 opacity-60">
-                <i class="fas fa-credit-card text-4xl text-gray-200 mb-3"></i>
-                <p class="text-sm text-gray-400 font-bold">輸入金額與店名，立即精算最佳回饋</p>
+                <i class="fas fa-credit-card text-4xl opacity-30 mb-3"></i>
+                <p class="text-sm font-bold opacity-70">輸入金額與店名，立即精算最佳回饋</p>
             </div>
 
         </div>
@@ -139,24 +150,24 @@
     <div id="backdrop" class="backdrop fixed inset-0 bg-black/60 z-40" onclick="togglePaymentModal(false)"></div>
 
     <!-- Bottom Sheet -->
-    <div id="paymentModal" class="bottom-sheet fixed inset-x-0 bottom-0 z-50 bg-gray-50 rounded-t-[28px] shadow-[0_-10px_40px_rgba(0,0,0,0.2)] max-h-[85vh] flex flex-col max-w-md mx-auto">
+    <div id="paymentModal" :class="currentTheme.modalBg" class="bottom-sheet fixed inset-x-0 bottom-0 z-50 rounded-t-[28px] shadow-[0_-10px_40px_rgba(0,0,0,0.2)] max-h-[85vh] flex flex-col max-w-md mx-auto transition-colors duration-300">
         <div class="flex-shrink-0 flex justify-center pt-3 pb-2 w-full touch-none" onclick="togglePaymentModal(false)">
-            <div class="w-12 h-1.5 bg-gray-300 rounded-full"></div>
+            <div class="w-12 h-1.5 bg-gray-400/40 rounded-full"></div>
         </div>
-        <div class="flex justify-between items-center px-6 pb-4 border-b border-gray-200">
-            <h3 class="text-lg font-black text-gray-800">設定支付組合</h3>
-            <button onclick="togglePaymentModal(false)" class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-300">
+        <div class="flex justify-between items-center px-6 pb-4 border-b opacity-90">
+            <h3 class="text-lg font-black">設定支付組合</h3>
+            <button onclick="togglePaymentModal(false)" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-500/20">
                 <i class="fas fa-times"></i>
             </button>
         </div>
         <div class="flex-1 overflow-y-auto p-5 scrollbar-hide">
             <div id="garageContainer" class="space-y-4">
-                <div class="text-center text-xs text-gray-400 py-10 animate-pulse">
+                <div class="text-center text-xs py-10 animate-pulse">
                     <i class="fas fa-spinner fa-spin text-xl mb-2 text-blue-500"></i><br>正在載入支付工具...
                 </div>
             </div>
         </div>
-        <div class="p-5 bg-white border-t border-gray-100 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
+        <div class="p-5 border-t pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
             <button onclick="togglePaymentModal(false)" class="w-full bg-blue-600 text-white font-black py-3.5 rounded-xl shadow-lg hover:bg-blue-700 transition-colors">
                 確認組合
             </button>
@@ -177,6 +188,94 @@
             'TH': { code: 'THB', name: '泰銖', sym: '฿' }
         };
 
+        // 🎨 4 種佈景主題設定 (與 points 網站完全一致)
+        const themes = [
+            {
+                name: '極黑',
+                htmlBg: 'bg-slate-950',
+                bgClass: 'bg-slate-950 text-slate-100',
+                headerBg: 'bg-gradient-to-r from-slate-900 to-indigo-950',
+                cardBg: 'bg-slate-900',
+                cardBorder: 'border-slate-800',
+                inputBoxBg: 'bg-slate-950 border-slate-800',
+                inputFieldBg: 'bg-slate-900 text-white',
+                walletBtn: 'bg-slate-900 border-slate-800 text-slate-100 hover:border-blue-500',
+                champCard: 'bg-gradient-to-br from-slate-900 to-indigo-950/60 border-blue-500/30 text-slate-100',
+                modalBg: 'bg-slate-900 text-slate-100',
+                textSub: 'text-slate-300',
+                rootBg: '#020617',
+                rootText: '#f1f5f9'
+            },
+            {
+                name: '深藍',
+                htmlBg: 'bg-slate-900',
+                bgClass: 'bg-slate-900 text-slate-100',
+                headerBg: 'bg-gradient-to-r from-blue-700 to-indigo-900',
+                cardBg: 'bg-slate-800/90',
+                cardBorder: 'border-slate-700',
+                inputBoxBg: 'bg-slate-900 border-slate-700',
+                inputFieldBg: 'bg-slate-800 text-white',
+                walletBtn: 'bg-slate-800 border-slate-700 text-slate-100 hover:border-blue-400',
+                champCard: 'bg-gradient-to-br from-blue-950/60 to-indigo-950/80 border-blue-400/30 text-slate-100',
+                modalBg: 'bg-slate-800 text-slate-100',
+                textSub: 'text-slate-200',
+                rootBg: '#0f172a',
+                rootText: '#f1f5f9'
+            },
+            {
+                name: '暗灰',
+                htmlBg: 'bg-zinc-950',
+                bgClass: 'bg-zinc-950 text-zinc-100',
+                headerBg: 'bg-gradient-to-r from-zinc-900 to-neutral-900',
+                cardBg: 'bg-zinc-900',
+                cardBorder: 'border-zinc-800',
+                inputBoxBg: 'bg-zinc-950 border-zinc-800',
+                inputFieldBg: 'bg-zinc-900 text-white',
+                walletBtn: 'bg-zinc-900 border-zinc-800 text-zinc-100 hover:border-blue-500',
+                champCard: 'bg-gradient-to-br from-zinc-900 to-zinc-800 border-zinc-700 text-zinc-100',
+                modalBg: 'bg-zinc-900 text-zinc-100',
+                textSub: 'text-zinc-300',
+                rootBg: '#09090b',
+                rootText: '#f4f4f5'
+            },
+            {
+                name: '質感白',
+                htmlBg: 'bg-slate-100',
+                bgClass: 'bg-slate-100 text-slate-900',
+                headerBg: 'bg-gradient-to-r from-blue-600 to-indigo-700',
+                cardBg: 'bg-white',
+                cardBorder: 'border-gray-200',
+                inputBoxBg: 'bg-gray-50 border-gray-100',
+                inputFieldBg: 'bg-white text-gray-800',
+                walletBtn: 'bg-white border-gray-200 text-gray-800 hover:border-blue-300',
+                champCard: 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 text-gray-800',
+                modalBg: 'bg-gray-50 text-gray-800',
+                textSub: 'text-gray-800',
+                rootBg: '#f8fafc',
+                rootText: '#1e293b'
+            }
+        ];
+
+        const savedThemeIdx = Number(localStorage.getItem('card_theme_idx') || 3); // 預設質感白或根據記憶
+        const currentThemeIdx = Vue.ref(savedThemeIdx < themes.length ? savedThemeIdx : 3);
+        const currentTheme = Vue.computed(() => themes[currentThemeIdx.value]);
+
+        function updateRootCss(theme) {
+            document.documentElement.style.setProperty('--page-bg', theme.rootBg);
+            document.documentElement.style.setProperty('--page-text', theme.rootText);
+            document.documentElement.style.setProperty('--card-bg', theme.rootBg === '#f8fafc' ? '#ffffff' : theme.rootBg);
+        }
+
+        Vue.watch(currentTheme, (newTheme) => {
+            updateRootCss(newTheme);
+        });
+
+        const cycleTheme = () => {
+            currentThemeIdx.value = (currentThemeIdx.value + 1) % themes.length;
+            localStorage.setItem('card_theme_idx', currentThemeIdx.value);
+            updateRootCss(currentTheme.value);
+        };
+
         fetch('https://api.exchangerate-api.com/v4/latest/TWD')
             .then(response => response.json())
             .then(data => { if (data && data.rates) fxRates = data.rates; })
@@ -192,19 +291,6 @@
             'infinite': { name: '旅人無限卡', tw: 18, overseas: 10 },
             'signature': { name: '旅人御璽卡', tw: 18, overseas: 15 },
             'light': { name: '旅人輕旅卡', tw: 20, overseas: 20 }
-        };
-
-        // 星展飛行卡設定 (世界之極/世界/商務)
-        const dbsFlightConfig = {
-            'tw': 18, // 18元/哩
-            'overseas': 15 // 15元/哩 (或依卡等調整)
-        };
-
-        // 玉山星宇卡設定 (世界卡/商務鈦金卡/鈦金卡)
-        const starluxConfig = {
-            'world': { tw: 20, overseas: 10 },
-            'business': { tw: 25, overseas: 15 },
-            'titanium': { tw: 28, overseas: 20 }
         };
 
         function getRichartMatch(searchVal, currentCountry) {
@@ -289,7 +375,7 @@
 
         function formatPaymentNameWithImage(method) {
             let imgFileName = null;
-            let cssFallback = '<i class="fas fa-credit-card text-gray-400 text-sm mr-2 mt-0.5 flex-shrink-0" id="fallback-'+method+'"></i>';
+            let cssFallback = '<i class="fas fa-credit-card text-gray-400 text-sm mr-2 mt-0.5 flex-shrink-0"></i>';
 
             if (method.includes('星宇')) imgFileName = 'starlux.png';
             else if (method.includes('飛行')) imgFileName = 'dbs.png';
@@ -317,8 +403,8 @@
                     ${imgTag}
                     <div style="${imgFileName ? 'display:none;' : 'display:flex;'}">${cssFallback}</div>
                     <div class="flex flex-col flex-1 overflow-hidden ml-1">
-                        <span class="font-bold text-[13px] text-gray-800 truncate leading-tight">${mainName}</span>
-                        ${subName ? `<span class="text-[9px] text-gray-400 font-normal leading-tight mt-0.5">${subName}</span>` : ''}
+                        <span class="font-bold text-[13px] truncate leading-tight">${mainName}</span>
+                        ${subName ? `<span class="text-[9px] opacity-60 font-normal leading-tight mt-0.5">${subName}</span>` : ''}
                     </div>
                 </div>
             `;
@@ -349,8 +435,8 @@
             let extraDropdown = '';
             if (method.includes('Unicard')) {
                 extraDropdown = `
-                    <div class="mt-2.5 pt-2.5 border-t border-gray-100">
-                        <select id="unicardLevel" class="w-full text-[11px] border-none rounded-md py-1.5 bg-emerald-50/50 text-emerald-700 font-bold focus:ring-0">
+                    <div class="mt-2.5 pt-2.5 border-t border-gray-500/20">
+                        <select id="unicardLevel" class="w-full text-[11px] border-none rounded-md py-1.5 font-bold focus:ring-0 bg-emerald-500/10 text-emerald-600">
                             <option value="up" selected>🏆 UP選 (4.5%)</option>
                             <option value="any">🎯 任意選 (3.5%)</option>
                             <option value="simple">🔰 簡單選 (3%)</option>
@@ -358,16 +444,16 @@
                     </div>`;
             } else if (method.includes('全盈')) {
                 extraDropdown = `
-                    <div class="mt-2.5 pt-2.5 border-t border-gray-100">
-                        <select id="pluspayLevel" class="w-full text-[11px] border-none rounded-md py-1.5 bg-blue-50/50 text-blue-700 font-bold focus:ring-0">
+                    <div class="mt-2.5 pt-2.5 border-t border-gray-500/20">
+                        <select id="pluspayLevel" class="w-full text-[11px] border-none rounded-md py-1.5 font-bold focus:ring-0 bg-blue-500/10 text-blue-600">
                             <option value="old" selected>👤 舊戶</option>
                             <option value="new">🌟 新戶</option>
                         </select>
                     </div>`;
             } else if (method.includes('滙豐') || method.includes('旅人')) {
                 extraDropdown = `
-                    <div class="mt-2.5 pt-2.5 border-t border-gray-100">
-                        <select id="hsbcLevel" class="w-full text-[11px] border-none rounded-md py-1.5 bg-gray-50 text-gray-700 font-bold focus:ring-0">
+                    <div class="mt-2.5 pt-2.5 border-t border-gray-500/20">
+                        <select id="hsbcLevel" class="w-full text-[11px] border-none rounded-md py-1.5 font-bold focus:ring-0 bg-gray-500/10">
                             <option value="infinite" selected>💳 旅人無限卡</option>
                             <option value="signature">💳 旅人御璽卡</option>
                             <option value="light">💳 旅人輕旅卡</option>
@@ -375,20 +461,20 @@
                     </div>`;
             } else if (method.includes('星宇')) {
                 extraDropdown = `
-                    <div class="mt-2.5 pt-2.5 border-t border-gray-100">
-                        <select id="starluxLevel" class="w-full text-[11px] border-none rounded-md py-1.5 bg-yellow-50/50 text-yellow-700 font-bold focus:ring-0 mb-1.5" onchange="toggleStarluxBirthday()">
+                    <div class="mt-2.5 pt-2.5 border-t border-gray-500/20">
+                        <select id="starluxLevel" class="w-full text-[11px] border-none rounded-md py-1.5 font-bold focus:ring-0 mb-1.5 bg-yellow-500/10 text-yellow-600" onchange="toggleStarluxBirthday()">
                             <option value="world" selected>✈️ 世界卡</option>
                             <option value="business">✈️ 商務鈦金卡</option>
                             <option value="titanium">✈️ 鈦金卡</option>
                         </select>
                         <div id="starluxBirthdayDiv" class="flex items-center ml-1 ${currentCountry === 'TW' ? 'hidden' : ''}">
                             <input type="checkbox" id="starluxBirthdayCheck" class="w-3 h-3 text-yellow-600 rounded border-gray-300 mr-1.5">
-                            <label for="starluxBirthdayCheck" class="text-[10px] text-gray-500 font-bold cursor-pointer">🎂 剛好是生日月</label>
+                            <label for="starluxBirthdayCheck" class="text-[10px] opacity-70 font-bold cursor-pointer">🎂 剛好是生日月</label>
                         </div>
                     </div>`;
             }
             return `
-                <div class="flex flex-col bg-white p-3 rounded-[14px] border border-gray-100 shadow-sm w-full">
+                <div class="flex flex-col p-3 rounded-[14px] border border-gray-500/20 shadow-sm w-full transition-colors" :class="currentTheme.cardBg">
                     <label class="flex items-center cursor-pointer w-full">
                         <input type="checkbox" value="${method}" checked class="tool-checkbox w-4 h-4 text-blue-600 rounded border-gray-300 mr-2.5 flex-shrink-0 focus:ring-blue-500">
                         ${formatPaymentNameWithImage(method)}
@@ -422,7 +508,6 @@
                         if (countryObj[method][plan].some(store => store.type === 'mileage')) { isMileage = true; break; }
                     }
                 }
-                // 額外強制把星展飛行與玉山星宇歸類到哩程卡
                 if (method.includes('星展飛行') || method.includes('玉山星宇')) isMileage = true;
                 
                 if (isMileage) categories.mileage.items.push(htmlBlock);
@@ -438,10 +523,10 @@
                     finalHtml += `
                         <div class="mb-4">
                             <div class="flex justify-between items-center mb-2 px-1">
-                                <h3 class="text-[13px] font-black text-gray-700">${cat.title}</h3>
+                                <h3 class="text-[13px] font-black opacity-80">${cat.title}</h3>
                                 <div class="flex space-x-2">
-                                    <button onclick="toggleCategoryCards('${contentId}', true, event)" class="text-[10px] text-blue-600 font-bold">全選</button>
-                                    <button onclick="toggleCategoryCards('${contentId}', false, event)" class="text-[10px] text-gray-400 font-bold">清空</button>
+                                    <button onclick="toggleCategoryCards('${contentId}', true, event)" class="text-[10px] text-blue-500 font-bold">全選</button>
+                                    <button onclick="toggleCategoryCards('${contentId}', false, event)" class="text-[10px] opacity-50 font-bold">清空</button>
                                 </div>
                             </div>
                             <div id="${contentId}" class="grid grid-cols-2 gap-2">
@@ -557,14 +642,6 @@
                 .filter(item => searchMatch(val, item.name) && checkedMethods.includes(item.card))
                 .map(m => ({ ...m }));
 
-            const cubeMethod = checkedMethods.find(m => m.includes('CUBE'));
-            const unicardMethod = checkedMethods.find(m => m.includes('Unicard'));
-            const hsbcMethod = checkedMethods.find(m => m.includes('滙豐') || m.includes('旅人'));
-            const richartMethod = checkedMethods.find(m => m.includes('台新') || m.includes('Richart'));
-            const dbsFlightMethod = checkedMethods.find(m => m.includes('星展飛行'));
-            const starluxMethod = checkedMethods.find(m => m.includes('玉山星宇'));
-
-            // 自動補上保底與通用機制
             checkedMethods.forEach(cardName => {
                 const alreadyHas = matchedList.some(m => m.card === cardName);
                 if (!alreadyHas) {
@@ -595,7 +672,6 @@
                 }
             });
 
-            // 動態參數計算與哩程校正
             matchedList = matchedList.map(m => {
                 if (m.card.includes('Unicard')) {
                     const uSel = document.getElementById('unicardLevel');
@@ -625,7 +701,6 @@
                 return m;
             });
 
-            // 排序：回饋率由高到低
             matchedList.sort((a, b) => b.rate - a.rate);
 
             if (matchedList.length > 0) {
@@ -656,7 +731,7 @@
             const card = document.getElementById('championCard');
             let rule = getPromoRule(m); 
             
-            let badgeStyle = m.isBaseline ? 'bg-indigo-100 text-indigo-700 border-indigo-200' : 'bg-rose-100 text-rose-700 border-rose-200';
+            let badgeStyle = m.isBaseline ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' : 'bg-rose-500/20 text-rose-400 border-rose-500/30';
             let badgeText = m.isBaseline ? `通用保底` : `精準適用`;
 
             let mainRateHtml = '';
@@ -679,28 +754,28 @@
             }
 
             if(rule) {
-                warningsHtml += `<div class="mt-1 text-[11px] text-amber-600 font-bold bg-amber-50 px-2 py-1 rounded inline-block shadow-sm"><i class="fas fa-info-circle mr-1"></i>${rule.desc}</div>`;
+                warningsHtml += `<div class="mt-1 text-[11px] text-amber-500 font-bold bg-amber-500/10 px-2 py-1 rounded inline-block shadow-sm"><i class="fas fa-info-circle mr-1"></i>${rule.desc}</div>`;
             } else {
-                warningsHtml += `<div class="mt-1 text-[11px] text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded inline-block shadow-sm"><i class="fas fa-infinity mr-1"></i>回饋無上限</div>`;
+                warningsHtml += `<div class="mt-1 text-[11px] text-emerald-500 font-bold bg-emerald-500/10 px-2 py-1 rounded inline-block shadow-sm"><i class="fas fa-infinity mr-1"></i>回饋無上限</div>`;
             }
 
             card.innerHTML = `
                 <div class="relative z-10 flex justify-between items-start mb-4">
                     <div>
                         <div class="text-[11px] font-bold ${badgeStyle} px-2 py-0.5 rounded border inline-block mb-1.5 shadow-sm">${badgeText} · ${m.name}</div>
-                        <h2 class="text-xl font-black text-gray-800 tracking-tight leading-tight">${m.card.replace(/ \(.+\)/, '')}</h2>
-                        <div class="text-sm font-bold text-blue-600 mt-0.5">切換至【${m.plan}】</div>
+                        <h2 class="text-xl font-black tracking-tight leading-tight">${m.card.replace(/ \(.+\)/, '')}</h2>
+                        <div class="text-sm font-bold text-blue-500 mt-0.5">切換至【${m.plan}】</div>
                     </div>
                 </div>
                 
-                <div class="relative z-10 flex justify-between items-end border-t border-blue-100/50 pt-3">
+                <div class="relative z-10 flex justify-between items-end border-t border-blue-500/20 pt-3">
                     <div>
-                        <div class="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">最高回饋率</div>
-                        <div class="text-3xl font-black text-blue-700 leading-none">${mainRateHtml}</div>
+                        <div class="text-[11px] opacity-75 font-bold uppercase tracking-wider mb-0.5">最高回饋率</div>
+                        <div class="text-3xl font-black text-blue-500 leading-none">${mainRateHtml}</div>
                     </div>
                     <div class="text-right">
-                        <div class="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">預估可得</div>
-                        <div class="text-lg font-black text-rose-600">${returnValHtml}</div>
+                        <div class="text-[11px] opacity-75 font-bold uppercase tracking-wider mb-0.5">預估可得</div>
+                        <div class="text-lg font-black text-rose-500">${returnValHtml}</div>
                     </div>
                 </div>
                 <div class="relative z-10">${warningsHtml}</div>
@@ -711,8 +786,8 @@
             let rateText = '', valText = '';
             let rule = getPromoRule(m);
             let limitIcon = rule 
-                ? `<span class="text-[9px] text-amber-600 font-bold ml-1 bg-amber-50 px-1.5 py-0.5 rounded" title="${rule.desc}">有上限</span>` 
-                : `<span class="text-[9px] text-emerald-600 font-bold ml-1 bg-emerald-50 px-1.5 py-0.5 rounded"><i class="fas fa-infinity"></i> 無上限</span>`;
+                ? `<span class="text-[9px] text-amber-500 font-bold ml-1 bg-amber-500/10 px-1.5 py-0.5 rounded" title="${rule.desc}">有上限</span>` 
+                : `<span class="text-[9px] text-emerald-500 font-bold ml-1 bg-emerald-500/10 px-1.5 py-0.5 rounded"><i class="fas fa-infinity"></i> 無上限</span>`;
 
             if (m.type === 'mileage') {
                 rateText = `${m.ratio}元/${m.unit}`;
@@ -726,23 +801,29 @@
             }
 
             return `
-                <div class="bg-white p-3.5 rounded-xl border border-gray-200 flex justify-between items-center shadow-sm">
+                <div :class="currentTheme.cardBg" class="p-3.5 rounded-xl border border-gray-500/20 flex justify-between items-center shadow-sm transition-colors">
                     <div>
-                        <div class="text-[14px] font-black text-gray-900 leading-tight">
+                        <div class="text-[14px] font-black leading-tight">
                             ${m.card.replace(/ \(.+\)/, '')} 
-                            <span class="text-blue-600 text-[12px] font-bold ml-1.5">${m.plan}</span>
+                            <span class="text-blue-500 text-[12px] font-bold ml-1.5">${m.plan}</span>
                         </div>
-                        <div class="text-[11px] font-bold text-gray-700 mt-1 flex items-center">
+                        <div class="text-[11px] font-bold opacity-80 mt-1 flex items-center">
                             ${m.name} ${limitIcon}
                         </div>
                     </div>
                     <div class="text-right">
-                        <div class="text-base font-black text-blue-600">${rateText}</div>
-                        <div class="text-xs font-bold text-rose-600">${valText}</div>
+                        <div class="text-base font-black text-blue-500">${rateText}</div>
+                        <div class="text-xs font-bold text-rose-500">${valText}</div>
                     </div>
                 </div>
             `;
         }
+
+        Vue.createApp({
+            setup() {
+                return { themes, currentTheme, cycleTheme };
+            }
+        }).mount('#app');
     </script>
 </body>
 </html>
